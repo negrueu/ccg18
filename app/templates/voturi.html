@@ -2,7 +2,7 @@
 {% block title %}Voturi{% endblock %}
 {% block body %}
 <h1>Voturi</h1>
-<form class="card stack" method="post" action="/voturi">
+<form class="card stack" method="post" action="/voturi"><input type="hidden" name="csrf" value="{{ csrf }}">
   <b>Vot nou</b>
   <label>Întrebarea<input name="title" required placeholder="Aprobarea bugetului pe 2027"></label>
   <label>Detalii (opțional)<textarea name="description" rows="2"></textarea></label>

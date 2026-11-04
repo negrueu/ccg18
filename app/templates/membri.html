@@ -9,7 +9,7 @@
   <a class="btn {{ '' if f == 'confirmat' else 'ghost' }}" href="/membri?f=confirmat">Confirmați</a>
 </div>
 <div class="row2">
-  <form class="card stack" method="post" action="/membri/adauga">
+  <form class="card stack" method="post" action="/membri/adauga"><input type="hidden" name="csrf" value="{{ csrf }}">
     <b>Adaugă / actualizează membru (confirmat)</b>
     <label>Nume și prenume<input name="nume" required></label>
     <label>Telefon<input name="telefon" required placeholder="0XX XXX XXX"></label>
@@ -20,7 +20,7 @@
     <label class="check"><input type="checkbox" name="is_admin" value="1"> Membru al conducerii (acces la panou)</label>
     <button>Salvează</button>
   </form>
-  <form class="card stack" method="post" action="/membri/import" enctype="multipart/form-data">
+  <form class="card stack" method="post" action="/membri/import" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{ csrf }}">
     <b>Import CSV</b>
     <p class="muted"><b>Registrul oficial:</b> coloane <code>nume, telefon, garaje, rand</code> (garaje separate prin <code>;</code>) - membrii intră confirmați.<br>
     <b>Lista din grupul Viber:</b> coloane <code>nume_viber, telefon</code> - membrii intră neconfirmați, fără drept de vot, și botul le cere numele și garajele.</p>
@@ -37,7 +37,7 @@
       <td>{% if m.blocked_at %}<span class="pill warn">a blocat botul</span>{% elif m.telegram_id %}<span class="pill ok">conectat</span>{% else %}<span class="pill">nu</span>{% endif %}</td>
       <td>{% if m.status == 'confirmat' %}<span class="pill ok">confirmat</span>{% else %}
         <details><summary><span class="pill warn">de confirmat</span></summary>
-          <form class="stack" method="post" action="/membri/{{ m.id }}/confirma" style="margin-top:.5rem;min-width:240px">
+          <form class="stack" method="post" action="/membri/{{ m.id }}/confirma" style="margin-top:.5rem;min-width:240px"><input type="hidden" name="csrf" value="{{ csrf }}">
             {% if m.self_name %}<span class="muted">Declarat în bot: {{ m.self_name }} · garaje {{ m.self_garages }}</span>{% else %}<span class="muted">Nu a completat încă datele în bot.</span>{% endif %}
             <label>Nume conform registrului<input name="nume" value="{{ m.self_name or m.name }}" required></label>
             <div class="row2">

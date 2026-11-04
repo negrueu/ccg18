@@ -46,6 +46,33 @@ def current_admin(request: Request):
     return m
 
 
+def csrf_token(request) -> str:
+    """Token legat de sesiune: HMAC(secret, cookie). Nu poate fi ghicit de un site străin."""
+    import hashlib
+    import hmac
+    raw = request.cookies.get(COOKIE, "")
+    return hmac.new(ctx(request).settings.secret_key.encode(), ("csrf:" + raw).encode(), hashlib.sha256).hexdigest()
+
+
+def _same_origin(request) -> bool:
+    base = ctx(request).settings.base_url
+    origin = request.headers.get("origin") or ""
+    if origin:
+        return origin.rstrip("/") == base
+    ref = request.headers.get("referer") or ""
+    return ref.startswith(base + "/")
+
+
+async def admin_post(request: Request):
+    """Admin + protecție CSRF pentru orice POST: aceeași origine ȘI token valid în formular."""
+    admin = current_admin(request)
+    form = await request.form()
+    import hmac
+    if not _same_origin(request) or not hmac.compare_digest(str(form.get("csrf", "")), csrf_token(request)):
+        raise HTTPException(403)
+    return admin
+
+
 def _session(request, resp, member_id):
     secure = ctx(request).settings.base_url.startswith("https://")
     resp.set_cookie(COOKIE, signer(request).dumps(member_id), max_age=SESSION_AGE, httponly=True,
@@ -54,7 +81,7 @@ def _session(request, resp, member_id):
 
 
 def render(request, name, admin, **kw):
-    return templates.TemplateResponse(request, name, {"admin": admin, **kw})
+    return templates.TemplateResponse(request, name, {"admin": admin, "csrf": csrf_token(request), **kw})
 
 
 def spawn(request, coro):
@@ -126,7 +153,7 @@ def membri(request: Request, admin=Depends(current_admin), msg: str = "", f: str
 
 
 @router.post("/membri/import")
-async def membri_import(request: Request, file: UploadFile = File(...), admin=Depends(current_admin)):
+async def membri_import(request: Request, file: UploadFile = File(...), admin=Depends(admin_post)):
     raw = await file.read()
     try:
         text = raw.decode("utf-8")
@@ -146,7 +173,7 @@ async def membri_import(request: Request, file: UploadFile = File(...), admin=De
 
 @router.post("/membri/adauga")
 def membri_adauga(request: Request, nume: str = Form(...), telefon: str = Form(...), garaje: str = Form(""),
-                  rand: str = Form(""), is_admin: str = Form(""), admin=Depends(current_admin)):
+                  rand: str = Form(""), is_admin: str = Form(""), admin=Depends(admin_post)):
     c = ctx(request).conn
     gs = garaje.replace(";", ",").replace(" ", ",").split(",")
     mid = members.upsert(c, nume.strip(), telefon, gs, rand.strip() or None, is_admin=bool(is_admin))
@@ -157,7 +184,7 @@ def membri_adauga(request: Request, nume: str = Form(...), telefon: str = Form(.
 
 @router.post("/membri/{mid}/confirma")
 def membri_confirma(mid: int, request: Request, nume: str = Form(...), garaje: str = Form(...),
-                    rand: str = Form(""), admin=Depends(current_admin)):
+                    rand: str = Form(""), admin=Depends(admin_post)):
     st = ctx(request)
     gs = [x for x in garaje.replace(";", ",").replace(" ", ",").split(",") if x.strip()]
     if not gs:
@@ -187,7 +214,7 @@ def voturi(request: Request, admin=Depends(current_admin)):
 @router.post("/voturi")
 def voturi_create(request: Request, title: str = Form(...), description: str = Form(""),
                   options: str = Form(...), weight_mode: str = Form("member"), secret: str = Form(""),
-                  deadline: str = Form(...), admin=Depends(current_admin)):
+                  deadline: str = Form(...), admin=Depends(admin_post)):
     dl = datetime.fromisoformat(deadline).replace(tzinfo=TZ)
     vid = votes.create(ctx(request).conn, title.strip(), description.strip(), options.splitlines(),
                        weight_mode, bool(secret), dl)
@@ -212,7 +239,7 @@ def vot(vid: int, request: Request, admin=Depends(current_admin), err: str = "")
 
 @router.post("/voturi/{vid}/hartie")
 def vot_hartie(vid: int, request: Request, member_id: int = Form(...), option_idx: int = Form(...),
-               admin=Depends(current_admin)):
+               admin=Depends(admin_post)):
     try:
         votes.cast(ctx(request).conn, vid, member_id, option_idx, entered_by=admin["id"])
     except votes.VoteError as e:
@@ -222,7 +249,7 @@ def vot_hartie(vid: int, request: Request, member_id: int = Form(...), option_id
 
 
 @router.post("/voturi/{vid}/inchide")
-def vot_inchide(vid: int, request: Request, admin=Depends(current_admin)):
+def vot_inchide(vid: int, request: Request, admin=Depends(admin_post)):
     votes.close(ctx(request).conn, vid)
     audit.log(ctx(request).conn, admin["id"], "vot_inchis", f"#{vid}")
     return RedirectResponse(f"/voturi/{vid}", 303)
@@ -248,7 +275,7 @@ def anunturi(request: Request, admin=Depends(current_admin)):
 @router.post("/anunturi")
 async def anunturi_create(request: Request, kind: str = Form("anunt"), title: str = Form(...),
                           body: str = Form(""), row_label: str = Form(""), file: UploadFile | None = File(None),
-                          admin=Depends(current_admin)):
+                          admin=Depends(admin_post)):
     st = ctx(request)
     path = None
     if file is not None and file.filename:
@@ -273,7 +300,7 @@ def cotizatii(request: Request, admin=Depends(current_admin)):
 
 
 @router.post("/cotizatii/{due_id}/achitat")
-def cotizatii_paid(due_id: int, request: Request, admin=Depends(current_admin)):
+def cotizatii_paid(due_id: int, request: Request, admin=Depends(admin_post)):
     dues.mark_paid(ctx(request).conn, due_id)
     audit.log(ctx(request).conn, admin["id"], "cotizatie_achitata", f"#{due_id}")
     return RedirectResponse("/cotizatii", 303)
@@ -286,7 +313,7 @@ def sesizari(request: Request, admin=Depends(current_admin)):
 
 
 @router.post("/sesizari/{rid}/rezolva")
-def sesizari_resolve(rid: int, request: Request, admin=Depends(current_admin)):
+def sesizari_resolve(rid: int, request: Request, admin=Depends(admin_post)):
     st = ctx(request)
     m = reports.resolve(st.conn, rid)
     audit.log(st.conn, admin["id"], "sesizare_rezolvata", f"#{rid}")

@@ -25,12 +25,12 @@
 <div class="actions">
   <a class="btn ghost" href="/voturi/{{ v.id }}/pv">Proces-verbal</a>
   {% if v.status == 'open' %}
-  <form method="post" action="/voturi/{{ v.id }}/inchide"><button class="ghost">Închide votul</button></form>
+  <form method="post" action="/voturi/{{ v.id }}/inchide"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="ghost">Închide votul</button></form>
   {% endif %}
 </div>
 {% if is_open and not_voted %}
 <h2>Vot pe hârtie / la telefon (introdus de conducere)</h2>
-<form class="card stack" method="post" action="/voturi/{{ v.id }}/hartie">
+<form class="card stack" method="post" action="/voturi/{{ v.id }}/hartie"><input type="hidden" name="csrf" value="{{ csrf }}">
   <div class="row2">
     <label>Membru<select name="member_id">{% for m in not_voted %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}</select></label>
     <label>Varianta<select name="option_idx">{% for o in opts %}<option value="{{ loop.index0 }}">{{ o }}</option>{% endfor %}</select></label>

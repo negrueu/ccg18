@@ -2,7 +2,7 @@
 {% block title %}Anunțuri{% endblock %}
 {% block body %}
 <h1>Anunțuri și convocări</h1>
-<form class="card stack" method="post" action="/anunturi" enctype="multipart/form-data">
+<form class="card stack" method="post" action="/anunturi" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{ csrf }}">
   <div class="row2">
     <label>Tip
       <select name="kind"><option value="anunt">Anunț</option><option value="convocare">Convocare adunare (cu confirmare de primire)</option></select>

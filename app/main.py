@@ -71,6 +71,25 @@ def create_app(settings=None, conn=None) -> FastAPI:
         task.add_done_callback(st.tasks.discard)
         return {"ok": True}
 
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        resp = await call_next(request)
+        h = resp.headers
+        # Mini App-ul rulează și în iframe pe web.telegram.org: doar acolo e permisă încadrarea.
+        h["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; "
+            "style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; "
+            "form-action 'self'; base-uri 'none'; object-src 'none'; "
+            "frame-ancestors 'self' https://web.telegram.org")
+        h["X-Content-Type-Options"] = "nosniff"
+        h["Referrer-Policy"] = "same-origin"
+        h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        if settings.base_url.startswith("https://"):
+            h["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        if request.url.path not in ("/health",) and not request.url.path.startswith("/static"):
+            h["Cache-Control"] = "no-store"
+        return resp
+
     @app.get("/health")
     def health():
         return {"ok": True}
