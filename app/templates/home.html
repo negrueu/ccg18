@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Tablou{% endblock %}
+{% block body %}
+<h1>Tablou</h1>
+<div class="grid">
+  <div class="tile"><b>{{ s.members }}</b><small>membri în listă</small></div>
+  <div class="tile"><b>{{ s.linked }}</b><small>conectați în Telegram</small></div>
+  <div class="tile"><b>{{ s.garages }}</b><small>garaje</small></div>
+  <div class="tile"><b>{{ s.open_votes }}</b><small>voturi deschise</small></div>
+  <div class="tile"><b>{{ s.new_reports }}</b><small>sesizări noi</small></div>
+  <div class="tile"><b>{{ "%.0f"|format(s.datorat) }}</b><small>lei de încasat</small></div>
+</div>
+<h2>Ultimele voturi</h2>
+{% if votes %}
+<div class="scroll"><table>
+  <tr><th>Vot</th><th>Termen</th><th>Stare</th></tr>
+  {% for v in votes %}
+  <tr><td><a href="/voturi/{{ v.id }}">{{ v.title }}</a></td><td>{{ v.deadline|dt }}</td>
+      <td><span class="pill {{ 'ok' if v.status == 'open' }}">{{ 'deschis' if v.status == 'open' else 'închis' }}</span></td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="muted">Niciun vot încă. <a href="/voturi">Creați primul vot</a>.</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Jurnal{% endblock %}
+{% block body %}
+<h1>Jurnal și grup</h1>
+<div class="card">
+  <b>Grupul Telegram</b>
+  {% if group.invite %}
+  <p>Legat: <b>{{ group.title }}</b>. Link de aderare (fiecare cerere e verificată automat de bot, intră doar membrii din registru):<br>
+     <code>{{ group.invite }}</code></p>
+  {% else %}
+  <p class="muted">Niciun grup legat. Creați un grup în Telegram, adăugați <b>@ccg18bot</b> și faceți-l administrator (cu dreptul „Invite users”). Botul creează automat linkul cu verificare și vi-l trimite.</p>
+  {% endif %}
+</div>
+<h2>Jurnal de audit</h2>
+<p class="muted">Fiecare acțiune a conducerii, cu autor și oră (UTC). Jurnalul nu poate fi modificat din panou.</p>
+<div class="scroll"><table>
+  <tr><th>Ora (UTC)</th><th>Cine</th><th>Acțiune</th><th>Detalii</th></tr>
+  {% for a in items %}
+  <tr><td>{{ a.at }}</td><td>{{ a.actor or '-' }}</td><td>{{ a.action }}</td><td>{{ a.detail }}</td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

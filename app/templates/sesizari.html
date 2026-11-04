@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Sesizări{% endblock %}
+{% block body %}
+<h1>Sesizări</h1>
+{% if not items %}<p class="muted">Nicio sesizare. Membrii le trimit din bot, butonul „📝 Sesizare”.</p>{% endif %}
+{% for r in items %}
+<div class="card">
+  <div class="actions">
+    <b>#{{ r.id }}</b> <span class="pill {{ 'ok' if r.status == 'rezolvat' else 'warn' }}">{{ r.status }}</span>
+    <span class="muted">{{ r.name }} · garaje {{ r.garaje }} · {{ r.created_at }}</span>
+  </div>
+  <p>{{ r.text }}</p>
+  {% if r.photo_file_id %}<a href="/foto/{{ r.id }}"><img class="thumb" src="/foto/{{ r.id }}" alt="poză sesizare"></a>{% endif %}
+  {% if r.status != 'rezolvat' %}
+  <form method="post" action="/sesizari/{{ r.id }}/rezolva"><button class="small">Marchează rezolvat și anunță membrul</button></form>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

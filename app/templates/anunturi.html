@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Anunțuri{% endblock %}
+{% block body %}
+<h1>Anunțuri și convocări</h1>
+<form class="card stack" method="post" action="/anunturi" enctype="multipart/form-data">
+  <div class="row2">
+    <label>Tip
+      <select name="kind"><option value="anunt">Anunț</option><option value="convocare">Convocare adunare (cu confirmare de primire)</option></select>
+    </label>
+    <label>Destinatari
+      <select name="row_label"><option value="">Toți membrii</option>{% for r in rows %}<option value="{{ r }}">Rândul {{ r }}</option>{% endfor %}</select>
+    </label>
+  </div>
+  <label>Titlu<input name="title" required placeholder="Adunarea generală din 20 noiembrie"></label>
+  <label>Text<textarea name="body" rows="4" placeholder="Data, ora, locul, ordinea de zi..."></textarea></label>
+  <label>Document atașat (opțional, ex. bugetul în PDF)<input type="file" name="file"></label>
+  <button>Trimite</button>
+</form>
+<div class="scroll"><table>
+  <tr><th>Data</th><th>Titlu</th><th>Tip</th><th>Livrat</th><th>Confirmat</th></tr>
+  {% for n, s in items %}
+  <tr><td>{{ n.created_at }}</td><td>{{ n.title }}{% if n.row_label %} <span class="pill">rândul {{ n.row_label }}</span>{% endif %}</td>
+      <td>{{ 'convocare' if n.kind == 'convocare' else 'anunț' }}</td>
+      <td>{{ s.delivered }} / {{ s.total }}</td>
+      <td>{{ s.acked if n.kind == 'convocare' else '-' }}</td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proces-verbal - {{ m.vote.title }}</title>
+<style>
+  body { font-family: Cambria, Georgia, serif; color: #111; background: #fff; max-width: 780px; margin: 2rem auto; padding: 0 16px; line-height: 1.45; }
+  h1 { font-size: 1.3rem; text-align: center; margin-bottom: .2rem; }
+  .c { text-align: center; color: #444; margin-top: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .95rem; }
+  th, td { border: 1px solid #999; padding: .35rem .5rem; text-align: left; }
+  .sig { display: flex; justify-content: space-between; margin-top: 3rem; }
+  .sig div { width: 45%; border-top: 1px solid #333; padding-top: .3rem; text-align: center; font-size: .9rem; }
+  .noprint { margin: 1rem 0; font-family: system-ui, sans-serif; }
+  @media print { .noprint { display: none; } body { margin: 0 auto; } }
+</style>
+</head>
+<body>
+<div class="noprint"><button onclick="window.print()">Printează / Salvează PDF</button> <a href="/voturi/{{ m.vote.id }}">înapoi</a></div>
+<h1>PROCES-VERBAL<br>privind rezultatele votului electronic</h1>
+<p class="c">Cooperativa de construcție a garajelor nr. 18, mun. Chișinău</p>
+<p><b>Întrebarea supusă votului:</b> {{ m.vote.title }}</p>
+{% if m.vote.description %}<p>{{ m.vote.description }}</p>{% endif %}
+<p><b>Perioada:</b> {{ m.vote.created_at }} (UTC) - {{ m.vote.deadline|dt }} ·
+   <b>Mod de numărare:</b> {{ 'un vot pe garaj' if m.vote.weight_mode == 'garage' else 'un vot pe membru' }} ·
+   <b>Vot:</b> {{ 'secret' if m.vote.secret else 'deschis' }} ·
+   <b>Stare:</b> {{ 'închis' if m.vote.status == 'closed' else 'în desfășurare' }}</p>
+<p><b>Membri înscriși:</b> {{ m.tally.total_members }} · <b>Au votat:</b> {{ m.tally.voted_members }}
+   ({{ "%.1f"|format(100 * m.tally.voted_members / (m.tally.total_members or 1)) }}%)</p>
+<table>
+  <tr><th>Varianta</th><th>Membri</th><th>{{ 'Garaje (voturi)' if m.vote.weight_mode == 'garage' else 'Voturi' }}</th><th>% din total posibil</th></tr>
+  {% for o in m.tally.options %}
+  <tr><td>{{ o.label }}</td><td>{{ o.count }}</td><td>{{ o.weight }}</td>
+      <td>{{ "%.1f"|format(100 * o.weight / (m.tally.total_weight_possible or 1)) }}%</td></tr>
+  {% endfor %}
+</table>
+<p><b>Lista membrilor care au votat</b>{% if m.vote.secret %} (vot secret: opțiunea nu este asociată persoanei){% endif %}:</p>
+<table>
+  <tr><th>#</th><th>Membru</th><th>Garaje</th><th>Ora (UTC)</th>{% if not m.vote.secret %}<th>Opțiune</th>{% endif %}<th>Mod</th></tr>
+  {% for p in m.voters %}
+  <tr><td>{{ loop.index }}</td><td>{{ p.name }}</td><td>{{ p.garaje }}</td><td>{{ p.cast_at }}</td>
+      {% if not m.vote.secret %}<td>{{ p.choice }}</td>{% endif %}
+      <td>{{ 'pe hârtie, introdus de ' ~ p.entered_by if p.entered_by else 'Telegram' }}</td></tr>
+  {% endfor %}
+</table>
+<p style="font-size:.85rem;color:#555">Generat automat la {{ generated }} din sistemul de vot al CCG 18. Identificarea membrilor: număr de telefon confirmat de Telegram, comparat cu registrul asociației.</p>
+<div class="sig"><div>Președinte</div><div>Secretar</div></div>
+</body>
+</html>

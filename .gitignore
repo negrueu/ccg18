@@ -1,0 +1,13 @@
+.env
+data/
+__pycache__/
+*.pyc
+.pytest_cache/
+uploads/
+DOCUMENTATIE.md
+*.csv
+*.db
+*.sqlite
+*.xlsx
+*.vcf
+.claude/

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Membri{% endblock %}
+{% block body %}
+<h1>Membri</h1>
+{% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
+<div class="actions" style="margin-bottom:1rem">
+  <a class="btn {{ '' if not f else 'ghost' }}" href="/membri">Toți</a>
+  <a class="btn {{ '' if f == 'neconfirmat' else 'ghost' }}" href="/membri?f=neconfirmat">De confirmat</a>
+  <a class="btn {{ '' if f == 'confirmat' else 'ghost' }}" href="/membri?f=confirmat">Confirmați</a>
+</div>
+<div class="row2">
+  <form class="card stack" method="post" action="/membri/adauga">
+    <b>Adaugă / actualizează membru (confirmat)</b>
+    <label>Nume și prenume<input name="nume" required></label>
+    <label>Telefon<input name="telefon" required placeholder="0XX XXX XXX"></label>
+    <div class="row2">
+      <label>Garaje<input name="garaje" placeholder="12, 13"></label>
+      <label>Rând<input name="rand" placeholder="A"></label>
+    </div>
+    <label class="check"><input type="checkbox" name="is_admin" value="1"> Membru al conducerii (acces la panou)</label>
+    <button>Salvează</button>
+  </form>
+  <form class="card stack" method="post" action="/membri/import" enctype="multipart/form-data">
+    <b>Import CSV</b>
+    <p class="muted"><b>Registrul oficial:</b> coloane <code>nume, telefon, garaje, rand</code> (garaje separate prin <code>;</code>) - membrii intră confirmați.<br>
+    <b>Lista din grupul Viber:</b> coloane <code>nume_viber, telefon</code> - membrii intră neconfirmați, fără drept de vot, și botul le cere numele și garajele.</p>
+    <input type="file" name="file" accept=".csv,text/csv" required>
+    <button class="ghost">Importă</button>
+  </form>
+</div>
+<h2>{{ rows|length }} membri</h2>
+<div class="scroll"><table>
+  <tr><th>Nume</th><th>Telefon</th><th>Garaje</th><th>Telegram</th><th>Stare</th></tr>
+  {% for m in rows %}
+  <tr><td>{{ m.name }}{% if m.is_admin %} <span class="pill ok">conducere</span>{% endif %}</td>
+      <td>+{{ m.phone }}</td><td>{{ m.garaje or '-' }}</td>
+      <td>{% if m.blocked_at %}<span class="pill warn">a blocat botul</span>{% elif m.telegram_id %}<span class="pill ok">conectat</span>{% else %}<span class="pill">nu</span>{% endif %}</td>
+      <td>{% if m.status == 'confirmat' %}<span class="pill ok">confirmat</span>{% else %}
+        <details><summary><span class="pill warn">de confirmat</span></summary>
+          <form class="stack" method="post" action="/membri/{{ m.id }}/confirma" style="margin-top:.5rem;min-width:240px">
+            {% if m.self_name %}<span class="muted">Declarat în bot: {{ m.self_name }} · garaje {{ m.self_garages }}</span>{% else %}<span class="muted">Nu a completat încă datele în bot.</span>{% endif %}
+            <label>Nume conform registrului<input name="nume" value="{{ m.self_name or m.name }}" required></label>
+            <div class="row2">
+              <label>Garaje<input name="garaje" value="{{ m.self_garages or '' }}" required></label>
+              <label>Rând<input name="rand"></label>
+            </div>
+            <button class="small">Confirmă (activează votul)</button>
+          </form>
+        </details>{% endif %}</td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

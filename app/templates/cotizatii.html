@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Cotizații{% endblock %}
+{% block body %}
+<h1>Cotizații</h1>
+<div class="grid">
+  <div class="tile"><b>{{ "%.0f"|format(s.datorat) }}</b><small>lei de încasat</small></div>
+  <div class="tile"><b>{{ "%.0f"|format(s.incasat) }}</b><small>lei încasați</small></div>
+</div>
+<p class="muted">Demo: plata prin MIA QR necesită contractul asociației cu banca. Până atunci, conducerea marchează manual plățile.</p>
+<div class="scroll"><table>
+  <tr><th>Garaj</th><th>Membru</th><th>Perioada</th><th>Suma</th><th></th></tr>
+  {% for d in items %}
+  <tr><td>{{ d.garage }}</td><td>{{ d.name or '-' }}</td><td>{{ d.period }}</td><td>{{ "%.0f"|format(d.amount) }} lei</td>
+      <td>{% if d.paid_at %}<span class="pill ok">achitat</span>{% else %}
+        <form method="post" action="/cotizatii/{{ d.id }}/achitat"><button class="small ghost">Marchează achitat</button></form>{% endif %}</td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

@@ -1,0 +1,61 @@
+:root {
+  --bg: var(--tg-theme-bg-color, #f6f5f1);
+  --card: var(--tg-theme-secondary-bg-color, #ffffff);
+  --text: var(--tg-theme-text-color, #1d1d1b);
+  --muted: var(--tg-theme-hint-color, #6f6d66);
+  --accent: var(--tg-theme-button-color, #1f5f4a);
+  --accent-text: var(--tg-theme-button-text-color, #ffffff);
+  --line: rgba(0, 0, 0, .09);
+  --warn: #b5541c;
+  --ok: #2f7d4f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.tg) { --bg: #151514; --card: #1f1f1d; --text: #ecebe6; --muted: #9a988f; --line: rgba(255,255,255,.1); --accent: #4fa585; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; align-items: center; gap: 1rem; padding: .8rem 16px; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; background: var(--bg); z-index: 5; flex-wrap: wrap; }
+header .brand { font-weight: 700; letter-spacing: .02em; }
+header .brand span { color: var(--accent); }
+nav { display: flex; gap: .2rem; overflow-x: auto; flex: 1; }
+nav a { color: var(--muted); text-decoration: none; padding: .35rem .6rem; border-radius: 6px; white-space: nowrap; }
+nav a.on, nav a:hover { color: var(--text); background: var(--card); }
+main { max-width: 1040px; margin: 0 auto; padding: 1rem 16px 3rem; }
+h1 { font-size: 1.35rem; margin: .4rem 0 1rem; }
+h2 { font-size: 1.05rem; margin: 1.6rem 0 .6rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: .8rem 1rem; }
+.tile b { display: block; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.tile small { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+.scroll { overflow-x: auto; }
+form.stack { display: grid; gap: .6rem; }
+label { display: grid; gap: .25rem; font-size: .88rem; color: var(--muted); }
+input, select, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: .55rem .65rem; width: 100%; }
+label.check { display: flex; align-items: center; gap: .5rem; color: var(--text); }
+label.check input { width: auto; }
+button, .btn { font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-text); border: 0;
+  border-radius: 8px; padding: .55rem 1rem; cursor: pointer; text-decoration: none; display: inline-block; }
+button.ghost, .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+button.small { padding: .3rem .6rem; font-size: .85rem; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+@media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+.bar { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.opt { display: grid; grid-template-columns: 1fr auto; gap: .2rem .8rem; margin: .7rem 0; }
+.opt .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.opt .bar { grid-column: 1 / -1; }
+.pill { display: inline-block; font-size: .75rem; padding: .1rem .5rem; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.pill.ok { color: var(--ok); border-color: var(--ok); }
+.pill.warn { color: var(--warn); border-color: var(--warn); }
+.msg { background: var(--card); border-left: 3px solid var(--accent); padding: .6rem .8rem; margin-bottom: 1rem; }
+.err { border-left-color: var(--warn); }
+.muted { color: var(--muted); }
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+img.thumb { max-width: 140px; border-radius: 6px; display: block; }

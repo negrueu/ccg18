@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}CCG 18{% endblock %} - panou</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://telegram.org/js/telegram-web-app.js?64"></script>
+<script>
+  if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) {
+    document.documentElement.classList.add('tg'); Telegram.WebApp.ready(); Telegram.WebApp.expand();
+  }
+</script>
+</head>
+<body>
+<header>
+  <div class="brand">CCG <span>18</span></div>
+  {% set p = request.url.path %}
+  <nav>
+    <a href="/" class="{{ 'on' if p == '/' }}">Tablou</a>
+    <a href="/voturi" class="{{ 'on' if p.startswith('/voturi') }}">Voturi</a>
+    <a href="/anunturi" class="{{ 'on' if p.startswith('/anunturi') }}">Anunțuri</a>
+    <a href="/membri" class="{{ 'on' if p.startswith('/membri') }}">Membri</a>
+    <a href="/cotizatii" class="{{ 'on' if p.startswith('/cotizatii') }}">Cotizații</a>
+    <a href="/sesizari" class="{{ 'on' if p.startswith('/sesizari') }}">Sesizări</a>
+    <a href="/jurnal" class="{{ 'on' if p.startswith('/jurnal') }}">Jurnal</a>
+  </nav>
+  <span class="muted">{{ admin.name }}</span>
+</header>
+<main>{% block body %}{% endblock %}</main>
+</body>
+</html>
