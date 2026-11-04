@@ -55,6 +55,8 @@ def connect(path: str) -> sqlite3.Connection:
                      ("created_at", "text")):
         if col not in cols:
             c.execute(f"alter table members add column {col} {ddl}")
+    if "voice_file_id" not in {r[1] for r in c.execute("pragma table_info(reports)")}:
+        c.execute("alter table reports add column voice_file_id text")
     c.execute("""create table if not exists audit(
         id integer primary key, at text default (datetime('now')), actor_id integer, action text not null,
         detail text default '')""")

@@ -10,6 +10,7 @@
     <span class="muted">{{ r.name }} · garaje {{ r.garaje }} · {{ r.created_at }}</span>
   </div>
   <p>{{ r.text }}</p>
+  {% if r.voice_file_id %}<audio controls preload="none" src="/voce/{{ r.id }}"></audio>{% endif %}
   {% if r.photo_file_id %}<a href="/foto/{{ r.id }}"><img class="thumb" src="/foto/{{ r.id }}" alt="poză sesizare"></a>{% endif %}
   {% if r.status != 'rezolvat' %}
   <form method="post" action="/sesizari/{{ r.id }}/rezolva"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="small">Marchează rezolvat și anunță membrul</button></form>

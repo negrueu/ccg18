@@ -1,7 +1,7 @@
 T = {
     "ro": {
         "choose_lang": "Bună ziua! Alegeți limba / Выберите язык:",
-        "ask_contact": "Pentru a vă identifica în lista membrilor CCG 18, apăsați butonul de mai jos. Telegram ne trimite doar numărul dumneavoastră de telefon.",
+        "ask_contact": "Bună ziua! Ca să vă găsim în lista membrilor CCG 18, apăsați butonul mare de jos: <b>📱 Trimite numărul meu</b>.\n\nНа русском: /limba",
         "btn_contact": "📱 Trimite numărul meu",
         "not_own": "Vă rog trimiteți numărul PROPRIU, cu butonul „📱 Trimite numărul meu”. Contactele altor persoane nu sunt acceptate.",
         "not_found": "Numărul {phone} nu se află în lista membrilor CCG 18. Dacă sunteți membru, contactați conducerea asociației ca să vă adauge.",
@@ -34,7 +34,7 @@ T = {
         "dues_total": "\nTotal de achitat: <b>{total:.0f} lei</b>",
         "dues_none": "Nu aveți datorii. Mulțumim!",
         "qr_caption": "Cod QR DEMONSTRATIV - fără plată reală. Plata prin MIA va funcționa după contractul asociației cu banca.",
-        "report_ask": "Descrieți problema (un mesaj text, puteți atașa o poză cu descriere). Pentru anulare: /anulare",
+        "report_ask": "Descrieți problema: scrieți un mesaj, trimiteți o poză sau țineți apăsat 🎤 și spuneți. Pentru anulare: /anulare",
         "report_ok": "Sesizarea #{id} a fost înregistrată. Vă anunțăm când se rezolvă.",
         "report_done": "✅ Sesizarea #{id} a fost marcată ca rezolvată de conducere.",
         "cancelled": "Anulat.",
@@ -61,10 +61,12 @@ T = {
         "mydata": "👤 <b>{name}</b>\nTelefon: +{phone}\nGaraje: {garages}\nStare: {status}",
         "st_confirmat": "confirmat de conducere ✅",
         "st_neconfirmat": "în așteptarea confirmării",
+        "report_limit": "Ați trimis deja 5 sesizări azi. Încercați mâine sau sunați la conducere.",
+        "voice_label": "(mesaj vocal)",
     },
     "ru": {
         "choose_lang": "Добрый день! Alegeți limba / Выберите язык:",
-        "ask_contact": "Чтобы найти вас в списке членов ГСК 18, нажмите кнопку ниже. Telegram передаст нам только ваш номер телефона.",
+        "ask_contact": "Добрый день! Чтобы найти вас в списке членов ГСК 18, нажмите большую кнопку внизу: <b>📱 Отправить мой номер</b>.\n\nÎn română: /limba",
         "btn_contact": "📱 Отправить мой номер",
         "not_own": "Пожалуйста, отправьте СВОЙ номер кнопкой «📱 Отправить мой номер». Контакты других людей не принимаются.",
         "not_found": "Номера {phone} нет в списке членов ГСК 18. Если вы член кооператива, обратитесь к правлению, чтобы вас добавили.",
@@ -97,7 +99,7 @@ T = {
         "dues_total": "\nИтого к оплате: <b>{total:.0f} лей</b>",
         "dues_none": "Задолженностей нет. Спасибо!",
         "qr_caption": "ДЕМОНСТРАЦИОННЫЙ QR-код - без реальной оплаты. Оплата через MIA заработает после договора кооператива с банком.",
-        "report_ask": "Опишите проблему (текстом, можно приложить фото с подписью). Отмена: /anulare",
+        "report_ask": "Опишите проблему: напишите, пришлите фото или зажмите 🎤 и скажите голосом. Отмена: /anulare",
         "report_ok": "Обращение #{id} зарегистрировано. Мы сообщим, когда оно будет решено.",
         "report_done": "✅ Правление отметило обращение #{id} как решённое.",
         "cancelled": "Отменено.",
@@ -124,6 +126,8 @@ T = {
         "mydata": "👤 <b>{name}</b>\nТелефон: +{phone}\nГаражи: {garages}\nСтатус: {status}",
         "st_confirmat": "подтверждено правлением ✅",
         "st_neconfirmat": "ожидает подтверждения",
+        "report_limit": "Сегодня вы уже отправили 5 обращений. Попробуйте завтра или позвоните правлению.",
+        "voice_label": "(голосовое сообщение)",
     },
 }
 

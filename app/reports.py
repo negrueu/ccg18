@@ -1,9 +1,17 @@
 from . import members
 
+MAX_PER_DAY = 5  # limită anti-spam per membru
 
-def create(conn, member_id, text, photo_file_id=None) -> int:
-    return conn.execute("insert into reports(member_id, text, photo_file_id) values(?,?,?)",
-                        (member_id, text or "", photo_file_id)).lastrowid
+
+def create(conn, member_id, text, photo_file_id=None, voice_file_id=None) -> int:
+    return conn.execute("insert into reports(member_id, text, photo_file_id, voice_file_id) values(?,?,?,?)",
+                        (member_id, text or "", photo_file_id, voice_file_id)).lastrowid
+
+
+def allowed(conn, member_id) -> bool:
+    n = conn.execute("select count(*) from reports where member_id=? and created_at > datetime('now','-1 day')",
+                     (member_id,)).fetchone()[0]
+    return n < MAX_PER_DAY
 
 
 def list_all(conn):

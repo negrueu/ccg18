@@ -78,7 +78,7 @@ def create_app(settings=None, conn=None) -> FastAPI:
         # Mini App-ul rulează și în iframe pe web.telegram.org: doar acolo e permisă încadrarea.
         h["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; "
-            "style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; "
             "form-action 'self'; base-uri 'none'; object-src 'none'; "
             "frame-ancestors 'self' https://web.telegram.org")
         h["X-Content-Type-Options"] = "nosniff"

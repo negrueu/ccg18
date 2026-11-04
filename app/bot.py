@@ -34,6 +34,11 @@ class Onboard(StatesGroup):
     garages = State()
 
 
+def guess_lang(user) -> str:
+    code = (getattr(user, "language_code", None) or "").lower()
+    return "ru" if code.startswith(("ru", "uk", "be")) else "ro"
+
+
 def needs_onboarding(m):
     return m is not None and m["status"] != "confirmat" and not m["self_name"]
 
@@ -222,7 +227,10 @@ def build(conn, settings):
             await msg.answer(t(m["lang"], "welcome", name=esc(m["name"]), garages=garages_str(conn, m["id"])),
                              reply_markup=main_menu(m["lang"]))
             return
-        await msg.answer(t("ro", "choose_lang"), reply_markup=lang_kb())
+        # fără pasul de alegere a limbii: o luăm din setările Telegram (mai puțini pași pentru vârstnici)
+        lang = guess_lang(msg.from_user)
+        await state.update_data(lang=lang)
+        await msg.answer(t(lang, "ask_contact"), reply_markup=contact_kb(lang))
 
     @r.callback_query(F.data.startswith("lang:"))
     async def choose_lang(cb: CallbackQuery, state: FSMContext):
@@ -350,7 +358,7 @@ def build(conn, settings):
         lang = m["lang"] if m else "ro"
         await msg.answer(t(lang, "cancelled"), reply_markup=main_menu(lang) if m else None)
 
-    @r.message(StateFilter(ReportFlow.waiting), F.photo | F.text)
+    @r.message(StateFilter(ReportFlow.waiting), F.photo | F.text | F.voice)
     async def report_body(msg: Message, state: FSMContext):
         m = me(msg.from_user.id)
         await state.clear()
@@ -359,17 +367,26 @@ def build(conn, settings):
         if msg.text and menu_key(msg.text):
             await menu(msg, state)
             return
+        if not reports.allowed(conn, m["id"]):
+            await msg.answer(t(m["lang"], "report_limit"), reply_markup=main_menu(m["lang"]))
+            return
         photo = msg.photo[-1].file_id if msg.photo else None
-        text = msg.caption if msg.photo else msg.text
-        rid = reports.create(conn, m["id"], text or "", photo)
+        voice = msg.voice.file_id if msg.voice else None
+        text = (msg.caption if (msg.photo or msg.voice) else msg.text) or ""
+        if voice and not text:
+            text = t(m["lang"], "voice_label")
+        rid = reports.create(conn, m["id"], text[:2000], photo, voice)
         await msg.answer(t(m["lang"], "report_ok", id=rid), reply_markup=main_menu(m["lang"]))
         for a in conn.execute("select * from members where is_admin=1 and telegram_id is not null"):
             body = t(a["lang"], "new_report_admin", id=rid, name=esc(m["name"]),
-                     garages=garages_str(conn, m["id"]), text=esc(text or ""))
+                     garages=garages_str(conn, m["id"]), text=esc(text))
+            tid = a["telegram_id"]
             if photo:
-                await safe_send(lambda: bot.send_photo(a["telegram_id"], photo, caption=body[:1024]))
+                await safe_send(lambda: bot.send_photo(tid, photo, caption=body[:1024]))
+            elif voice:
+                await safe_send(lambda: bot.send_voice(tid, voice, caption=body[:1024]))
             else:
-                await safe_send(lambda: bot.send_message(a["telegram_id"], body))
+                await safe_send(lambda: bot.send_message(tid, body[:4096]))
 
     # ---------- meniu ----------
     @r.message(F.text.func(lambda s: menu_key(s) is not None))
@@ -425,7 +442,8 @@ def build(conn, settings):
     async def fallback(msg: Message):
         m = me(msg.from_user.id)
         if not m:
-            await msg.answer(t("ro", "choose_lang"), reply_markup=lang_kb())
+            lang = guess_lang(msg.from_user)
+            await msg.answer(t(lang, "ask_contact"), reply_markup=contact_kb(lang))
         else:
             await msg.answer(t(m["lang"], "welcome", name=esc(m["name"]), garages=garages_str(conn, m["id"])),
                              reply_markup=main_menu(m["lang"]))

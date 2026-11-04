@@ -331,3 +331,14 @@ async def foto(rid: int, request: Request, admin=Depends(current_admin)):
     f = await st.bot.get_file(r["photo_file_id"])
     buf = await st.bot.download_file(f.file_path)
     return Response(buf.read(), media_type="image/jpeg")
+
+
+@router.get("/voce/{rid}")
+async def voce(rid: int, request: Request, admin=Depends(current_admin)):
+    st = ctx(request)
+    r = reports.get(st.conn, rid)
+    if not r or not r["voice_file_id"] or not st.bot:
+        raise HTTPException(404)
+    f = await st.bot.get_file(r["voice_file_id"])
+    buf = await st.bot.download_file(f.file_path)
+    return Response(buf.read(), media_type="audio/ogg")
