@@ -36,7 +36,5 @@ def run_admins(conn, admin_phones):
         if existing:
             conn.execute("update members set is_admin=1 where id=?", (existing["id"],))
             continue
-        number = str(900 + i)
-        members.upsert(conn, f"Administrator {i + 1}", p, [number], "A", is_admin=True)
-        gid = conn.execute("select id from garages where number=?", (number,)).fetchone()["id"]
-        conn.execute("insert or ignore into dues(garage_id, period, amount) values(?,?,?)", (gid, "2026", 650))
+        mid = members.upsert(conn, f"Administrator {i + 1}", p, [], None, is_admin=True)
+        conn.execute("update members set status='confirmat', source='panou' where id=?", (mid,))

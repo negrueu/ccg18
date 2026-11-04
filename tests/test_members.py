@@ -25,6 +25,6 @@ def test_seed_idempotent(conn):
     seed.run(conn, ["000999888"])
     seed.run(conn, ["000999888"])
     assert conn.execute("select count(*) from members").fetchone()[0] == 31
-    assert conn.execute("select count(*) from garages").fetchone()[0] == 41
+    assert conn.execute("select count(*) from garages").fetchone()[0] == 40
     adm = members.find_by_phone(conn, "000999888")
     assert adm["is_admin"] == 1
