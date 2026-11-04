@@ -27,6 +27,10 @@ def test_ack_idempotent(conn):
     notices.ack(conn, nid, a)
     s = notices.stats(conn, nid)
     assert s == {"delivered": 2, "acked": 1, "total": 2}
+    # ack fără livrare (callback_data falsificat) nu contează
+    nid2 = notices.create(conn, "convocare", "Rand D", "", row_label="D")
+    notices.ack(conn, nid2, a)
+    assert notices.stats(conn, nid2)["acked"] == 0
 
 
 def test_dues_and_qr(conn):

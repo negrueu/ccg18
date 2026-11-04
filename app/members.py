@@ -30,8 +30,21 @@ def garages(conn, member_id):
     ).fetchall()
 
 
+class GarageConflict(Exception):
+    def __init__(self, garages):
+        super().__init__(", ".join(garages))
+        self.garages = garages
+
+
 def upsert(conn, name, raw_phone, garage_numbers, row_label=None, is_admin=None):
     p = normalize(raw_phone)
+    wanted = [str(g).strip() for g in garage_numbers if str(g).strip()]
+    if wanted:
+        taken = [r["number"] for r in conn.execute(
+            "select g.number from garages g join members m on m.id=g.member_id where g.number in (%s) and m.phone<>?"
+            % ",".join("?" * len(wanted)), (*wanted, p))]
+        if taken:
+            raise GarageConflict(taken)
     row = conn.execute("select id from members where phone=?", (p,)).fetchone()
     if row:
         mid = row["id"]
@@ -62,8 +75,11 @@ def import_csv(conn, text: str) -> int:
         if not r.get("telefon") or not r.get("nume"):
             continue
         sep = "," if delim == ";" else ";"
-        mid = upsert(conn, r["nume"], r["telefon"], r.get("garaje", "").replace(sep, " ").split(),
-                     r.get("rand") or None)
+        try:
+            mid = upsert(conn, r["nume"], r["telefon"], r.get("garaje", "").replace(sep, " ").split(),
+                         r.get("rand") or None)
+        except GarageConflict:
+            continue  # garajul aparține altui membru: rândul se sare, nu se reatribuie tacit
         conn.execute("update members set status='confirmat', source='registru' where id=?", (mid,))
         n += 1
     return n

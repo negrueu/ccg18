@@ -66,7 +66,7 @@ def now_local():
 
 
 def garages_str(conn, mid):
-    return ", ".join(g["number"] for g in members.garages(conn, mid)) or "-"
+    return esc(", ".join(g["number"] for g in members.garages(conn, mid)) or "-")
 
 
 def main_menu(lang):
@@ -258,8 +258,8 @@ def build(conn, settings):
                 await safe_send(lambda: bot.send_message(tid, t(a["lang"], "relink_admin", name=esc(e.member["name"]))))
             return
         if not m:
-            log.info("contact respins: user=%s contact_user=%s phone=%s", msg.from_user.id, c.user_id,
-                     c.phone_number)
+            log.info("contact respins: user=%s contact_user=%s phone=***%s", msg.from_user.id, c.user_id,
+                     (c.phone_number or "")[-3:])
             if c.user_id != msg.from_user.id:
                 await msg.answer(t(lang, "not_own"), reply_markup=contact_kb(lang))
             else:

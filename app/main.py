@@ -19,6 +19,8 @@ log = logging.getLogger("ccg18")
 
 def create_app(settings=None, conn=None) -> FastAPI:
     settings = settings or config.load()
+    if len(settings.secret_key) < 32 or settings.secret_key == "dev-secret":
+        raise RuntimeError("SECRET_KEY lipsește sau e prea scurt (minim 32 de caractere). Refuz pornirea.")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -62,14 +64,37 @@ def create_app(settings=None, conn=None) -> FastAPI:
     @app.post("/tg/webhook")
     async def webhook(request: Request):
         st = request.app.state
-        if not st.bot or request.headers.get("X-Telegram-Bot-Api-Secret-Token") != st.webhook_secret:
-            return JSONResponse({"ok": False}, 401)
+        import hmac
+        got = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if not st.bot or not st.webhook_secret or not hmac.compare_digest(got, st.webhook_secret):
+            return JSONResponse({"ok": False}, 404)
         from aiogram.types import Update
         update = Update.model_validate(await request.json(), context={"bot": st.bot})
         task = asyncio.create_task(st.dp.feed_update(st.bot, update))
         st.tasks.add(task)
         task.add_done_callback(st.tasks.discard)
         return {"ok": True}
+
+    MAX_BODY = 15 * 1024 * 1024
+    PROTECTED = ("/membri", "/voturi", "/anunturi", "/cotizatii", "/sesizari", "/jurnal", "/logout")
+
+    @app.middleware("http")
+    async def guard_body(request: Request, call_next):
+        if request.method == "POST":
+            try:
+                size = int(request.headers.get("content-length", "0"))
+            except ValueError:
+                size = MAX_BODY + 1
+            if size > MAX_BODY or (size == 0 and "chunked" in request.headers.get("transfer-encoding", "")):
+                return HTMLResponse("Prea mare", 413)
+            if request.url.path.startswith(PROTECTED):
+                from itsdangerous import BadSignature, URLSafeTimedSerializer
+                try:
+                    URLSafeTimedSerializer(settings.secret_key, salt="admin").loads(
+                        request.cookies.get("ccg18_admin", ""), max_age=12 * 3600)
+                except BadSignature:
+                    return HTMLResponse("Neautorizat", 401)
+        return await call_next(request)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):

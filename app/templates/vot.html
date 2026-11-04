@@ -8,12 +8,13 @@
   <span class="pill">{{ 'un vot pe garaj' if v.weight_mode == 'garage' else 'un vot pe membru' }}</span>
   {% if v.secret %}<span class="pill">secret</span>{% endif %}
   <span class="muted">termen {{ v.deadline|dt }}</span></p>
-{% if err %}<div class="msg err">Votul nu a fost înregistrat: {{ {'already':'membrul a votat deja','closed':'votul e închis','expired':'termenul a expirat','bad_option':'variantă invalidă'}.get(err, err) }}</div>{% endif %}
+{% if err %}<div class="msg err">Votul nu a fost înregistrat: {{ {'already':'membrul a votat deja','closed':'votul e închis','expired':'termenul a expirat','bad_option':'variantă invalidă','not_confirmed':'membrul nu e confirmat','has_telegram':'membrul are Telegram și votează singur'}.get(err, err) }}</div>{% endif %}
 <div class="card">
   {% set tot = tally.total_weight_possible or 1 %}
   <b>Prezență: {{ tally.voted_members }} din {{ tally.total_members }} membri</b>
   ({{ "%.0f"|format(100 * tally.voted_members / (tally.total_members or 1)) }}%)
-  {% for o in tally.options %}
+  {% if not visible %}<p class="muted">Vot secret: rezultatele pe variante apar doar după închiderea votului.</p>{% endif %}
+  {% for o in (tally.options if visible else []) %}
   <div class="opt">
     <span>{{ o.label }}</span>
     <span class="num">{{ o.weight }}{% if v.weight_mode == 'garage' %} garaje{% endif %} · {{ o.count }} membri</span>
@@ -29,7 +30,7 @@
   {% endif %}
 </div>
 {% if is_open and not_voted %}
-<h2>Vot pe hârtie / la telefon (introdus de conducere)</h2>
+<h2>Vot pe hârtie (doar membri fără Telegram)</h2>
 <form class="card stack" method="post" action="/voturi/{{ v.id }}/hartie"><input type="hidden" name="csrf" value="{{ csrf }}">
   <div class="row2">
     <label>Membru<select name="member_id">{% for m in not_voted %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}</select></label>

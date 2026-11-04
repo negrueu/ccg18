@@ -28,7 +28,7 @@ def mark_delivered(conn, nid, mid):
 
 
 def ack(conn, nid, mid):
-    mark_delivered(conn, nid, mid)
+    """Confirmarea se acceptă doar dacă mesajul i-a fost livrat acestui membru."""
     conn.execute("update notice_delivery set ack_at=coalesce(ack_at, datetime('now')) "
                  "where notice_id=? and member_id=?", (nid, mid))
 

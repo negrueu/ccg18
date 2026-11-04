@@ -100,3 +100,22 @@ def test_open_for(conn):
     votes.cast(conn, v, a, 0)
     assert [r["id"] for r in votes.open_for(conn, a)] == []
     assert [r["id"] for r in votes.open_for(conn, b)] == [v]
+
+
+def test_secret_vote_order_does_not_link(conn):
+    ids = [members.upsert(conn, f"M{i}", f"0000001{i:02d}", [str(100 + i)]) for i in range(12)]
+    v = votes.create(conn, "S", "", ["A", "B"], "member", True, FUT)
+    for i, mid in enumerate(ids):
+        votes.cast(conn, v, mid, i % 2)
+    casts = [r["member_id"] for r in conn.execute("select member_id from vote_cast where vote_id=? order by rowid", (v,))]
+    choices = [r["option_idx"] for r in conn.execute("select option_idx from vote_choice where vote_id=? order by id", (v,))]
+    assert choices != [i % 2 for i in range(12)]  # ordinea pe id nu mai reproduce ordinea votării
+    assert all(len(r["cast_at"]) == 10 for r in conn.execute("select cast_at from vote_cast where vote_id=?", (v,)))
+
+
+def test_garage_cannot_be_stolen(conn):
+    a = members.upsert(conn, "Proprietar", "000000050", ["1", "2", "3"])
+    import pytest
+    with pytest.raises(members.GarageConflict):
+        members.upsert(conn, "Intrus", "000000051", ["1", "2", "3", "4"])
+    assert [g["number"] for g in members.garages(conn, a)] == ["1", "2", "3"]

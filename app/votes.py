@@ -1,4 +1,5 @@
 import json
+import secrets
 import sqlite3
 from datetime import datetime, timezone
 
@@ -61,20 +62,28 @@ def cast(conn, vote_id, member_id, option_idx, entered_by=None, now=None) -> int
     if not m or m["status"] != "confirmat":
         raise VoteError("not_confirmed")
     w = weight_for(conn, v, member_id)
-    conn.execute("begin immediate")
+    secret = bool(v["secret"])
+    # vot secret: ora doar la nivel de zi și id aleator pentru opțiune -> ordinea nu leagă votantul de vot
+    cast_at = datetime.now(timezone.utc).strftime("%Y-%m-%d") if secret else None
+    choice_id = secrets.randbits(52) if secret else None
     try:
-        conn.execute("insert into vote_cast(vote_id, member_id, entered_by) values(?,?,?)",
-                     (vote_id, member_id, entered_by))
-        conn.execute("insert into vote_choice(vote_id, option_idx, weight, member_id) values(?,?,?,?)",
-                     (vote_id, option_idx, w, None if v["secret"] else member_id))
-        conn.execute("commit")
+        with conn.transaction():
+            if cast_at:
+                conn.execute("insert into vote_cast(vote_id, member_id, entered_by, cast_at) values(?,?,?,?)",
+                             (vote_id, member_id, entered_by, cast_at))
+            else:
+                conn.execute("insert into vote_cast(vote_id, member_id, entered_by) values(?,?,?)",
+                             (vote_id, member_id, entered_by))
+            conn.execute("insert into vote_choice(id, vote_id, option_idx, weight, member_id) values(?,?,?,?,?)",
+                         (choice_id, vote_id, option_idx, w, None if secret else member_id))
     except sqlite3.IntegrityError:
-        conn.execute("rollback")
         raise VoteError("already")
-    except Exception:
-        conn.execute("rollback")
-        raise
     return w
+
+
+def results_visible(v, now=None) -> bool:
+    """La votul secret, rezultatele parțiale nu se arată nimănui până la închidere."""
+    return not v["secret"] or not is_open(v, now)
 
 
 def has_voted(conn, vote_id, member_id) -> bool:

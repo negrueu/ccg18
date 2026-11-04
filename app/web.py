@@ -116,8 +116,8 @@ async def webapp_login(request: Request):
     return _session(request, JSONResponse({"ok": True}), m["id"])
 
 
-@router.get("/logout")
-def logout():
+@router.post("/logout")
+def logout(admin=Depends(admin_post)):
     r = RedirectResponse("/login-info", 303)
     r.delete_cookie(COOKIE)
     return r
@@ -176,7 +176,10 @@ def membri_adauga(request: Request, nume: str = Form(...), telefon: str = Form(.
                   rand: str = Form(""), is_admin: str = Form(""), admin=Depends(admin_post)):
     c = ctx(request).conn
     gs = garaje.replace(";", ",").replace(" ", ",").split(",")
-    mid = members.upsert(c, nume.strip(), telefon, gs, rand.strip() or None, is_admin=bool(is_admin))
+    try:
+        mid = members.upsert(c, nume.strip(), telefon, gs, rand.strip() or None, is_admin=True if is_admin else None)
+    except members.GarageConflict as e:
+        return RedirectResponse(f"/membri?msg=Garajele {e} aparțin altui membru. Eliberați-le întâi.", 303)
     c.execute("update members set status='confirmat', source=coalesce(source,'panou') where id=?", (mid,))
     audit.log(c, admin["id"], "membru_salvat", f"#{mid} {nume.strip()}, garaje {garaje}, admin={bool(is_admin)}")
     return RedirectResponse("/membri?msg=Membru salvat", 303)
@@ -189,7 +192,10 @@ def membri_confirma(mid: int, request: Request, nume: str = Form(...), garaje: s
     gs = [x for x in garaje.replace(";", ",").replace(" ", ",").split(",") if x.strip()]
     if not gs:
         return RedirectResponse("/membri?f=neconfirmat&msg=Garajele sunt obligatorii la confirmare", 303)
-    members.confirm(st.conn, mid, nume, gs, rand.strip() or None)
+    try:
+        members.confirm(st.conn, mid, nume, gs, rand.strip() or None)
+    except members.GarageConflict as e:
+        return RedirectResponse(f"/membri?f=neconfirmat&msg=Garajele {e} aparțin altui membru - verificați registrul.", 303)
     audit.log(st.conn, admin["id"], "membru_confirmat", f"#{mid} {nume.strip()}, garaje {', '.join(gs)}")
     m = members.get(st.conn, mid)
     if m["telegram_id"] and st.bot:
@@ -243,20 +249,26 @@ def vot(vid: int, request: Request, admin=Depends(current_admin), err: str = "")
     v = votes.get(c, vid)
     if not v:
         raise HTTPException(404)
-    not_voted = c.execute("select m.* from members m where m.id not in "
-                          "(select member_id from vote_cast where vote_id=?) order by m.name", (vid,)).fetchall()
+    not_voted = c.execute("select m.* from members m where m.status='confirmat' and m.telegram_id is null "
+                          "and m.id not in (select member_id from vote_cast where vote_id=?) order by m.name",
+                          (vid,)).fetchall()
     return render(request, "vot.html", admin, v=v, tally=votes.tally(c, vid), opts=votes.options(v),
-                  not_voted=not_voted, is_open=votes.is_open(v), err=err)
+                  not_voted=not_voted, is_open=votes.is_open(v), err=err, visible=votes.results_visible(v))
 
 
 @router.post("/voturi/{vid}/hartie")
 def vot_hartie(vid: int, request: Request, member_id: int = Form(...), option_idx: int = Form(...),
                admin=Depends(admin_post)):
+    m = members.get(ctx(request).conn, member_id)
+    if not m or m["telegram_id"]:
+        return RedirectResponse(f"/voturi/{vid}?err=has_telegram", 303)
     try:
         votes.cast(ctx(request).conn, vid, member_id, option_idx, entered_by=admin["id"])
     except votes.VoteError as e:
         return RedirectResponse(f"/voturi/{vid}?err={e.code}", 303)
-    audit.log(ctx(request).conn, admin["id"], "vot_pe_hartie", f"vot #{vid}, membru #{member_id}, varianta {option_idx}")
+    v = votes.get(ctx(request).conn, vid)
+    det = f"vot #{vid}, membru #{member_id}" + ("" if v["secret"] else f", varianta {option_idx}")
+    audit.log(ctx(request).conn, admin["id"], "vot_pe_hartie", det)
     return RedirectResponse(f"/voturi/{vid}", 303)
 
 
@@ -272,6 +284,8 @@ def vot_pv(vid: int, request: Request, admin=Depends(current_admin)):
     c = ctx(request).conn
     if not votes.get(c, vid):
         raise HTTPException(404)
+    if not votes.results_visible(votes.get(c, vid)):
+        return HTMLResponse("<p>Votul secret e în desfășurare: rezultatele și procesul-verbal apar după închidere.</p>")
     return render(request, "pv.html", admin, m=votes.minutes(c, vid),
                   generated=datetime.now(TZ).strftime("%d.%m.%Y %H:%M"))
 

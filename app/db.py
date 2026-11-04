@@ -1,5 +1,38 @@
-import sqlite3
 import pathlib
+import sqlite3
+import threading
+from contextlib import contextmanager
+
+
+class LockedConnection:
+    """O singură conexiune SQLite folosită din bucla botului ȘI din firele FastAPI.
+    Fiecare execute ține un lacăt; o tranzacție multi-pas ține lacătul pe toată durata ei."""
+
+    def __init__(self, raw):
+        self._c = raw
+        self.lock = threading.RLock()
+
+    def execute(self, *a, **kw):
+        with self.lock:
+            return self._c.execute(*a, **kw)
+
+    def executescript(self, *a):
+        with self.lock:
+            return self._c.executescript(*a)
+
+    @contextmanager
+    def transaction(self):
+        with self.lock:
+            self._c.execute("begin immediate")
+            try:
+                yield self
+                self._c.execute("commit")
+            except BaseException:
+                self._c.execute("rollback")
+                raise
+
+    def close(self):
+        self._c.close()
 
 SCHEMA = """
 create table if not exists members(
@@ -38,11 +71,12 @@ create table if not exists admin_tokens(
 """
 
 
-def connect(path: str) -> sqlite3.Connection:
+def connect(path: str) -> LockedConnection:
     if path != ":memory:":
         pathlib.Path(path).parent.mkdir(parents=True, exist_ok=True)
-    c = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
-    c.row_factory = sqlite3.Row
+    raw = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
+    raw.row_factory = sqlite3.Row
+    c = LockedConnection(raw)
     c.execute("pragma foreign_keys=on")
     if path != ":memory:":
         c.execute("pragma journal_mode=wal")
