@@ -85,6 +85,29 @@ def login_page(request: Request, err: str = ""):
         "auth_url": st(request).settings.base_url + "/cont/tg"})
 
 
+@router.get("/app", response_class=HTMLResponse)
+def miniapp(request: Request):
+    return templates.TemplateResponse(request, "cont_miniapp.html", {})
+
+
+@router.post("/api/webapp-login")
+async def webapp_login(request: Request):
+    from fastapi.responses import JSONResponse
+    body = await request.json()
+    user = auth.verify_webapp_init_data(body.get("initData", ""), st(request).settings.bot_token)
+    if not user:
+        return JSONResponse({"ok": False, "error": "invalid"}, 401)
+    m = members.by_telegram(st(request).conn, user.get("id"))
+    if not m:
+        return JSONResponse({"ok": False, "error": "unlinked"}, 403)
+    secure = st(request).settings.base_url.startswith("https://")
+    resp = JSONResponse({"ok": True})
+    # în Telegram Web Mini App-ul rulează într-un iframe: cookie-ul trebuie SameSite=None; Secure
+    resp.set_cookie(COOKIE, signer(request).dumps(m["id"]), max_age=SESSION_AGE, httponly=True,
+                    secure=secure, samesite="none" if secure else "lax")
+    return resp
+
+
 FLOW_COOKIE = "ccg18_oidc"
 
 

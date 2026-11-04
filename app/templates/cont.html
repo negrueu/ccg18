@@ -81,7 +81,8 @@
     <span class="pill {{ 'ok' if r.status == 'rezolvat' else 'no' }}">{{ r.status }}</span></div>
   {% else %}<p class="muted">Nu ați trimis sesizări.</p>{% endfor %}
   <form method="post" action="/cont/sesizare" style="margin-top:14px"><input type="hidden" name="csrf" value="{{ csrf }}">
-    <textarea name="text" rows="3" required placeholder="Descrieți o problemă nouă"></textarea><br><br>
+    <textarea name="text" rows="3" required placeholder="Descrieți o problemă nouă"></textarea>
+    <p class="muted" style="font-size:16px">Sesizarea ajunge la conducerea CCG 18, care o folosește doar pentru a rezolva problema. <a href="/confidentialitate#durata">Se păstrează 2 ani după rezolvare</a>.</p>
     <button class="btn">Trimite sesizarea</button>
   </form>
 </div>

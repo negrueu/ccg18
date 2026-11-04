@@ -134,6 +134,12 @@ def landing(request: Request):
     return templates.TemplateResponse(request, "landing.html", {"bot_username": ctx(request).bot_username or "ccg18bot"})
 
 
+@router.get("/confidentialitate", response_class=HTMLResponse)
+def privacy(request: Request):
+    return templates.TemplateResponse(request, "confidentialitate.html", {
+        "bot_username": ctx(request).bot_username or "ccg18bot", "version": "05.11.2026"})
+
+
 @router.get("/qr-bot.png")
 def qr_bot(request: Request):
     import io

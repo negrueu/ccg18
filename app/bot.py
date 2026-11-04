@@ -73,7 +73,7 @@ def main_menu(lang):
     return ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text=t(lang, "m_votes")), KeyboardButton(text=t(lang, "m_dues"))],
                   [KeyboardButton(text=t(lang, "m_report")), KeyboardButton(text=t(lang, "m_news"))],
-                  [KeyboardButton(text=t(lang, "m_mydata"))]],
+                  [KeyboardButton(text=t(lang, "m_mydata")), KeyboardButton(text=t(lang, "m_web"))]],
         resize_keyboard=True, is_persistent=True)
 
 
@@ -443,6 +443,13 @@ def build(conn, settings):
             if not members.is_confirmed(m):
                 await state.set_state(Onboard.name)
                 await msg.answer(t(lang, "ask_name"))
+        elif key == "m_web":
+            rows = []
+            if settings.base_url.startswith("https://"):
+                rows.append([InlineKeyboardButton(text=t(lang, "btn_web_tg"),
+                                                  web_app=WebAppInfo(url=f"{settings.base_url}/cont/app"))])
+            rows.append([InlineKeyboardButton(text=t(lang, "btn_web_browser"), url=f"{settings.base_url}/cont")])
+            await msg.answer(t(lang, "web_open"), reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
         elif key == "m_news":
             items = notices.recent_for(conn, m["id"])
             if not items:
@@ -534,3 +541,11 @@ async def setup_profile(bot):
     await bot.set_my_description("Бот ГСК 18 (Кишинёв): голосования, объявления, созывы собраний, взносы и "
                                  "обращения. Нажмите Старт и отправьте номер телефона.", language_code="ru")
     await bot.set_my_short_description("CCG 18 - voturi, anunțuri, cotizații")
+
+
+async def setup_menu_button(bot, base_url):
+    """Butonul permanent de meniu (stânga câmpului de mesaj) deschide contul ca Mini App, cu identitatea semnată."""
+    from aiogram.types import MenuButtonWebApp
+    if base_url.startswith("https://"):
+        await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="Contul meu",
+                                                                     web_app=WebAppInfo(url=f"{base_url}/cont/app")))

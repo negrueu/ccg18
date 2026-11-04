@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCG 18 - contul meu</title>
+<script src="https://telegram.org/js/telegram-web-app.js?64"></script>
+<style>
+  body { margin:0; font: 20px/1.5 "Segoe UI", system-ui, sans-serif; background: var(--tg-theme-bg-color, #f6f4ee);
+         color: var(--tg-theme-text-color, #1b1c19); display:grid; place-items:center; min-height:100vh; text-align:center; padding: 20px; }
+  a { color: var(--tg-theme-link-color, #1f5f4a); }
+</style>
+</head>
+<body>
+<p id="s">Se deschide contul dumneavoastră...</p>
+<script>
+  var s = document.getElementById('s');
+  var wa = window.Telegram && Telegram.WebApp;
+  if (!wa || !wa.initData) {
+    location.replace('/cont/intrare');
+  } else {
+    wa.ready(); wa.expand();
+    fetch('/cont/api/webapp-login', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      credentials: 'include', body: JSON.stringify({initData: wa.initData})})
+      .then(function (r) { return r.json().then(function (j) { return {ok: r.ok, j: j}; }); })
+      .then(function (x) {
+        if (x.ok) { location.replace('/cont'); }
+        else if (x.j.error === 'unlinked') { s.innerHTML = 'Mai întâi vă identificați în bot: închideți această fereastră, apăsați Start și „📱 Trimite numărul meu”.'; }
+        else { s.textContent = 'Verificarea a eșuat. Închideți și redeschideți din bot.'; }
+      })
+      .catch(function () { s.textContent = 'Eroare de rețea. Încercați din nou.'; });
+  }
+</script>
+</body>
+</html>

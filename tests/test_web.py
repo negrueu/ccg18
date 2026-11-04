@@ -203,3 +203,40 @@ def test_generate_member_dues_and_member_dashboard():
         page = client.get("/cont").text
         assert "lei de achitat" in page and "XX00TEST" in page and "Cotizatie 2027 CCG-18" in page
         assert "Garajele mele" in page and "Voturile mele" in page
+
+
+def test_privacy_policy_16_items_and_links():
+    client, _ = _client()
+    with client:
+        p = client.get("/confidentialitate").text
+        for anchor in ("operator", "contact", "dpo", "scopuri", "categorii", "sursa", "destinatari", "transfer",
+                       "durata", "drepturi", "consimtamant", "plangere", "obligatie", "automat", "cookie"):
+            assert f'id="{anchor}"' in p, anchor
+        assert "Legii nr. 195/2024" in p and "datepersonale.md" in p
+        assert 'href="/confidentialitate"' in client.get("/").text
+        assert 'href="/confidentialitate"' in client.get("/cont/intrare").text
+
+
+def test_member_miniapp_login():
+    tok = "123:SECRET"
+    s = config.Settings(bot_token=tok, secret_key="k" * 40, base_url="http://test", db_path=":memory:",
+                        seed_demo=True, admin_phones=[], run_bot=False, upload_dir="data/test-uploads")
+    conn = db.connect(":memory:")
+    client = TestClient(create_app(s, conn), headers={"Origin": "http://test"})
+    import time
+    import hashlib, hmac
+    from urllib.parse import urlencode
+
+    def _signed(token, fields):
+        check = chr(10).join(f"{k}={fields[k]}" for k in sorted(fields))
+        secret = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
+        return urlencode({**fields, "hash": hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()})
+    with client:
+        good = _signed(tok, {"auth_date": str(int(time.time())), "user": '{"id":501}'})
+        assert client.post("/cont/api/webapp-login", json={"initData": good}).status_code == 403  # nelegat
+        m = members.find_by_phone(conn, "000000003")
+        members.link_telegram(conn, m["id"], 501)
+        assert client.post("/cont/api/webapp-login", json={"initData": good}).status_code == 200
+        assert "Garajele mele" in client.get("/cont").text
+        bad = _signed("999:OTHER", {"auth_date": str(int(time.time())), "user": '{"id":501}'})
+        assert client.post("/cont/api/webapp-login", json={"initData": bad}).status_code == 401

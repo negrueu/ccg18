@@ -1,7 +1,7 @@
 T = {
     "ro": {
         "choose_lang": "Bună ziua! Alegeți limba / Выберите язык:",
-        "ask_contact": "Bună ziua! Ca să vă găsim în lista membrilor CCG 18, apăsați butonul mare de jos: <b>📱 Trimite numărul meu</b>.\n\nНа русском: /limba",
+        "ask_contact": "Bună ziua! Ca să vă găsim în lista membrilor CCG 18, apăsați butonul mare de jos: <b>📱 Trimite numărul meu</b>.\n\nNumărul îl folosim doar ca să vă găsim în registrul cooperativei. Detalii: ccg18.cc/confidentialitate\nНа русском: /limba",
         "btn_contact": "📱 Trimite numărul meu",
         "not_own": "Vă rog trimiteți numărul PROPRIU, cu butonul „📱 Trimite numărul meu”. Contactele altor persoane nu sunt acceptate.",
         "not_found": "Numărul {phone} nu se află în lista membrilor CCG 18. Dacă sunteți membru, contactați conducerea asociației ca să vă adauge.",
@@ -62,6 +62,11 @@ T = {
         "relink_blocked": "Acest număr este deja legat de alt cont Telegram. Din motive de siguranță, conducerea CCG 18 trebuie să confirme schimbarea. Am trimis cererea; veți primi un mesaj după aprobare.",
         "relink_admin": "⚠️ Numărul membrului <b>{name}</b> a fost folosit de pe un ALT cont Telegram. Verificați la telefon sau în persoană, apoi aprobați în panou (Jurnal) dacă e chiar el.",
         "m_mydata": "👤 Datele mele",
+        "m_web": "🌐 Contul meu",
+        "web_open": "🌐 Contul dumneavoastră de membru: garaje, datorii, voturi, sesizări.",
+        "btn_web_tg": "📱 Deschide aici, în Telegram",
+        "btn_web_browser": "🌐 Deschide în browser",
+        "menu_button": "Contul meu",
         "mydata": "👤 <b>{name}</b>\nTelefon: +{phone}\nGaraje: {garages}\nStare: {status}",
         "st_confirmat": "confirmat de conducere ✅",
         "st_neconfirmat": "în așteptarea confirmării",
@@ -70,7 +75,7 @@ T = {
     },
     "ru": {
         "choose_lang": "Добрый день! Alegeți limba / Выберите язык:",
-        "ask_contact": "Добрый день! Чтобы найти вас в списке членов ГСК 18, нажмите большую кнопку внизу: <b>📱 Отправить мой номер</b>.\n\nÎn română: /limba",
+        "ask_contact": "Добрый день! Чтобы найти вас в списке членов ГСК 18, нажмите большую кнопку внизу: <b>📱 Отправить мой номер</b>.\n\nНомер используется только для поиска в реестре кооператива. Подробнее: ccg18.cc/confidentialitate\nÎn română: /limba",
         "btn_contact": "📱 Отправить мой номер",
         "not_own": "Пожалуйста, отправьте СВОЙ номер кнопкой «📱 Отправить мой номер». Контакты других людей не принимаются.",
         "not_found": "Номера {phone} нет в списке членов ГСК 18. Если вы член кооператива, обратитесь к правлению, чтобы вас добавили.",
@@ -131,6 +136,11 @@ T = {
         "relink_blocked": "Этот номер уже привязан к другому аккаунту Telegram. В целях безопасности правление ГСК 18 должно подтвердить смену. Запрос отправлен; вы получите сообщение после одобрения.",
         "relink_admin": "⚠️ Номер члена <b>{name}</b> использован с ДРУГОГО аккаунта Telegram. Проверьте по телефону или лично, затем одобрите в панели (Журнал), если это действительно он.",
         "m_mydata": "👤 Мои данные",
+        "m_web": "🌐 Мой кабинет",
+        "web_open": "🌐 Ваш личный кабинет: гаражи, долги, голосования, обращения.",
+        "btn_web_tg": "📱 Открыть здесь, в Telegram",
+        "btn_web_browser": "🌐 Открыть в браузере",
+        "menu_button": "Мой кабинет",
         "mydata": "👤 <b>{name}</b>\nТелефон: +{phone}\nГаражи: {garages}\nСтатус: {status}",
         "st_confirmat": "подтверждено правлением ✅",
         "st_neconfirmat": "ожидает подтверждения",
@@ -148,7 +158,7 @@ def t(lang, key, **kw):
 def menu_key(text):
     """Întoarce cheia de meniu (m_votes...) pentru un text în oricare limbă."""
     for lang in T.values():
-        for k in ("m_votes", "m_dues", "m_report", "m_news", "m_mydata"):
+        for k in ("m_votes", "m_dues", "m_report", "m_news", "m_mydata", "m_web"):
             if lang[k] == text:
                 return k
     return None
