@@ -30,6 +30,7 @@ def create_app(settings=None, conn=None) -> FastAPI:
         st.tasks = set()
         st.bot = st.dp = None
         st.webhook_secret = None
+        st.bot_username = None
         if settings.seed_demo:
             seed.run(st.conn, settings.admin_phones)
         else:
@@ -37,6 +38,10 @@ def create_app(settings=None, conn=None) -> FastAPI:
         poll_task = None
         if settings.run_bot and settings.bot_token:
             st.bot, st.dp = botmod.build(st.conn, settings)
+            try:
+                st.bot_username = (await st.bot.get_me()).username
+            except Exception as e:
+                log.warning("get_me: %s", e)
             try:
                 await botmod.setup_profile(st.bot)
             except Exception as e:  # profilul nu e critic
@@ -77,6 +82,20 @@ def create_app(settings=None, conn=None) -> FastAPI:
 
     MAX_BODY = 15 * 1024 * 1024
     PROTECTED = ("/membri", "/voturi", "/anunturi", "/cotizatii", "/sesizari", "/jurnal", "/logout")
+
+    from urllib.parse import urlsplit
+    canonical = urlsplit(settings.base_url).netloc
+
+    @app.middleware("http")
+    async def canonical_host(request: Request, call_next):
+        host = request.headers.get("host", "")
+        # orice alt nume (www, adrese vechi) -> domeniul canonic; webhook-ul și health rămân neatinse
+        if (canonical and host and host != canonical and settings.base_url.startswith("https://")
+                and request.url.path not in ("/health", "/tg/webhook") and request.method in ("GET", "HEAD")):
+            from fastapi.responses import RedirectResponse as _R
+            q = ("?" + request.url.query) if request.url.query else ""
+            return _R(settings.base_url + request.url.path + q, 301)
+        return await call_next(request)
 
     @app.middleware("http")
     async def guard_body(request: Request, call_next):

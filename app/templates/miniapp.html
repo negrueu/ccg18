@@ -20,7 +20,7 @@
       credentials: 'include', body: JSON.stringify({initData: wa.initData})})
       .then(r => r.json().then(j => ({ok: r.ok, j})))
       .then(({ok, j}) => {
-        if (ok) { location.replace('/'); }
+        if (ok) { location.replace('/panou'); }
         else { s.textContent = j.error === 'not_admin' ? 'Panoul este doar pentru conducerea asociației.' : 'Verificarea a eșuat. Redeschideți din bot.'; }
       })
       .catch(() => { s.textContent = 'Eroare de rețea. Încercați din nou.'; });

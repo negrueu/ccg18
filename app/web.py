@@ -96,7 +96,7 @@ def login(token: str, request: Request):
     m = auth.consume_admin_token(ctx(request).conn, token)
     if not m:
         return HTMLResponse("<p>Link expirat sau deja folosit. Trimiteți /panou în bot.</p>", 401)
-    return _session(request, RedirectResponse("/", 303), m["id"])
+    return _session(request, RedirectResponse("/panou", 303), m["id"])
 
 
 @router.get("/app", response_class=HTMLResponse)
@@ -130,6 +130,21 @@ def login_info():
 
 # ---------- tablou ----------
 @router.get("/", response_class=HTMLResponse)
+def landing(request: Request):
+    return templates.TemplateResponse(request, "landing.html", {"bot_username": ctx(request).bot_username or "ccg18bot"})
+
+
+@router.get("/qr-bot.png")
+def qr_bot(request: Request):
+    import io
+    import qrcode
+    img = qrcode.make(f"https://t.me/{ctx(request).bot_username or 'ccg18bot'}?start=qr", box_size=8, border=2)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return Response(buf.getvalue(), media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@router.get("/panou", response_class=HTMLResponse)
 def home(request: Request, admin=Depends(current_admin)):
     c = ctx(request).conn
     s = {

@@ -17,7 +17,7 @@
   <div class="brand">CCG <span>18</span></div>
   {% set p = request.url.path %}
   <nav>
-    <a href="/" class="{{ 'on' if p == '/' }}">Tablou</a>
+    <a href="/panou" class="{{ 'on' if p == '/panou' }}">Tablou</a>
     <a href="/voturi" class="{{ 'on' if p.startswith('/voturi') }}">Voturi</a>
     <a href="/anunturi" class="{{ 'on' if p.startswith('/anunturi') }}">Anunțuri</a>
     <a href="/membri" class="{{ 'on' if p.startswith('/membri') }}">Membri</a>

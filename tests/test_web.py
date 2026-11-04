@@ -42,7 +42,7 @@ def test_auth_and_minutes_have_no_phones():
         assert "introdus de Administrator 1" in pv
         for p in conn.execute("select phone from members"):
             assert p[0] not in pv
-        for path in ("/", "/membri", "/anunturi", "/cotizatii", "/sesizari", f"/voturi/{vid}"):
+        for path in ("/panou", "/membri", "/anunturi", "/cotizatii", "/sesizari", f"/voturi/{vid}"):
             assert client.get(path).status_code == 200, path
 
 
@@ -133,3 +133,12 @@ def test_secret_vote_hidden_while_open_and_paper_only_without_telegram():
         r = client.post(f"/voturi/{vid}/hartie", data={"csrf": tok, "member_id": m2["id"], "option_idx": 1},
                         follow_redirects=False)
         assert "has_telegram" in r.headers["location"]
+
+
+def test_landing_public_and_qr():
+    client, _ = _client()
+    with client:
+        r = client.get("/")
+        assert r.status_code == 200 and "1010600015220" in r.text and "t.me/ccg18bot" in r.text
+        assert client.get("/qr-bot.png").content.startswith(bytes([0x89]) + b"PNG")
+        assert client.get("/panou", follow_redirects=False).status_code == 401

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCG 18 - Cooperativa de garaje nr. 18, Chișinău</title>
+<meta name="description" content="Cooperativa de construcție a garajelor nr. 18, Rîșcani, Chișinău. Voturi, anunțuri și cotizații pentru membri, prin Telegram.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231f5f4a'/><text x='32' y='42' font-size='26' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'>18</text></svg>">
+<style>
+  :root { --bg:#f6f4ee; --ink:#1b1c19; --muted:#5d5c55; --accent:#1f5f4a; --accent-2:#e3efe9; --card:#fff; --line:#e2dfd6; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141513; --ink:#efeee9; --muted:#a9a79f; --accent:#5fb393; --accent-2:#1f2b26; --card:#1d1e1b; --line:#2e2f2b; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font: 19px/1.55 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  header { padding: 22px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .logo { display:flex; align-items:center; gap:12px; font-weight:800; font-size:20px; letter-spacing:.02em; }
+  .logo b { display:grid; place-items:center; width:44px; height:44px; border-radius:12px; background:var(--accent); color:#fff; font-size:20px; }
+  .lang a { font-weight:600; text-decoration:none; padding:6px 10px; border-radius:8px; }
+  .lang a.on { background: var(--accent-2); }
+  .hero { padding: 40px 0 28px; display:grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items:center; }
+  h1 { font-size: clamp(32px, 5vw, 50px); line-height:1.1; margin:0 0 18px; letter-spacing:-.01em; }
+  .lead { font-size: 22px; color: var(--muted); margin: 0 0 28px; }
+  .cta { display:inline-flex; align-items:center; gap:12px; background:var(--accent); color:#fff; text-decoration:none; font-weight:700;
+         font-size: 22px; padding: 18px 28px; border-radius: 14px; min-height: 64px; }
+  .cta:focus-visible { outline: 4px solid var(--ink); outline-offset: 3px; }
+  .qr { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:22px; text-align:center; }
+  .qr img { width: 220px; height: 220px; image-rendering: pixelated; }
+  .qr p { margin: 10px 0 0; color: var(--muted); font-size: 17px; }
+  section { padding: 34px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 30px; margin: 0 0 18px; }
+  .steps { display:grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: s; list-style: none; padding:0; margin:0; }
+  .steps li { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; counter-increment:s; }
+  .steps li::before { content: counter(s); display:grid; place-items:center; width:46px; height:46px; border-radius:50%;
+                      background:var(--accent); color:#fff; font-weight:800; font-size:22px; margin-bottom:12px; }
+  .steps b { display:block; font-size: 21px; margin-bottom: 6px; }
+  .grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; }
+  .card h3 { margin:0 0 8px; font-size: 21px; }
+  .card p { margin:0; color: var(--muted); }
+  .facts { display:grid; grid-template-columns: 220px 1fr; gap: 10px 20px; margin:0; }
+  .facts dt { color: var(--muted); }
+  .facts dd { margin:0; font-weight:600; }
+  footer { padding: 30px 0 50px; color: var(--muted); font-size: 16px; border-top: 1px solid var(--line); }
+  [lang-ru] { display:none; }
+  body.ru [lang-ro] { display:none; }
+  body.ru [lang-ru] { display:revert; }
+  @media (max-width: 760px) {
+    body { font-size: 18px; }
+    .hero, .grid, .steps { grid-template-columns: 1fr; }
+    .qr img { width: 180px; height: 180px; }
+    .facts { grid-template-columns: 1fr; }
+    .facts dt { margin-top: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><b>18</b><span>CCG 18</span></div>
+    <nav class="lang" aria-label="Limba / Язык">
+      <a href="?lang=ro" id="l-ro" class="on">Română</a>
+      <a href="?lang=ru" id="l-ru">Русский</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1 lang-ro>Cooperativa de garaje nr. 18, acum și pe telefon</h1>
+      <h1 lang-ru>Гаражный кооператив № 18 - теперь в телефоне</h1>
+      <p class="lead" lang-ro>Voturi, anunțuri, convocări și cotizații pentru membrii CCG 18, prin Telegram. Fără parole: vă identificați cu numărul de telefon.</p>
+      <p class="lead" lang-ru>Голосования, объявления, созывы собраний и взносы для членов ГСК 18 в Telegram. Без паролей: вход по номеру телефона.</p>
+      <a class="cta" href="https://t.me/{{ bot_username }}?start=site">
+        <span lang-ro>Deschide botul CCG 18 în Telegram</span><span lang-ru>Открыть бот ГСК 18 в Telegram</span>
+      </a>
+    </div>
+    <div class="qr">
+      <img src="/qr-bot.png" alt="Cod QR către botul CCG 18 în Telegram" width="220" height="220">
+      <p lang-ro>De pe calculator: scanați codul cu camera telefonului.</p>
+      <p lang-ru>С компьютера: наведите камеру телефона на код.</p>
+    </div>
+  </div>
+
+  <section>
+    <h2 lang-ro>Cum intrați: 3 pași</h2>
+    <h2 lang-ru>Как войти: 3 шага</h2>
+    <ol class="steps">
+      <li><b lang-ro>Deschideți botul</b><b lang-ru>Откройте бот</b>
+        <span lang-ro>Apăsați butonul verde de mai sus și apoi „Start”.</span><span lang-ru>Нажмите зелёную кнопку выше, затем «Старт».</span></li>
+      <li><b lang-ro>Trimiteți numărul</b><b lang-ru>Отправьте номер</b>
+        <span lang-ro>Apăsați „📱 Trimite numărul meu”. Nu trebuie să scrieți nimic.</span><span lang-ru>Нажмите «📱 Отправить мой номер». Ничего писать не нужно.</span></li>
+      <li><b lang-ro>Gata</b><b lang-ru>Готово</b>
+        <span lang-ro>Dacă numărul e în lista membrilor, vedeți meniul: voturi, cotizații, sesizări.</span><span lang-ru>Если номер есть в списке, появится меню: голосования, взносы, обращения.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 lang-ro>Ce puteți face</h2>
+    <h2 lang-ru>Что можно делать</h2>
+    <div class="grid">
+      <div class="card"><h3 lang-ro>🗳 Votați de acasă</h3><h3 lang-ru>🗳 Голосуйте из дома</h3>
+        <p lang-ro>Fiecare vot e verificat: votează doar membrii din registru, o singură dată, iar la votul secret nimeni nu vede ce ați ales.</p>
+        <p lang-ru>Каждый голос проверяется: голосуют только члены из реестра, один раз; при тайном голосовании никто не видит ваш выбор.</p></div>
+      <div class="card"><h3 lang-ro>📣 Anunțuri și convocări</h3><h3 lang-ru>📣 Объявления и созывы</h3>
+        <p lang-ro>Aflați la timp despre adunări, lucrări și decizii, direct pe telefon.</p>
+        <p lang-ru>Узнавайте вовремя о собраниях, работах и решениях прямо в телефоне.</p></div>
+      <div class="card"><h3 lang-ro>💰 Cotizații pe garaj</h3><h3 lang-ru>💰 Взносы по гаражам</h3>
+        <p lang-ro>Vedeți cât aveți de plătit pentru fiecare garaj și ce ați achitat.</p>
+        <p lang-ru>Сколько нужно заплатить за каждый гараж и что уже оплачено.</p></div>
+      <div class="card"><h3 lang-ro>📝 Sesizări</h3><h3 lang-ru>📝 Обращения</h3>
+        <p lang-ro>Trimiteți o problemă cu poză sau mesaj vocal; conducerea vă anunță când e rezolvată.</p>
+        <p lang-ru>Сообщите о проблеме фото или голосом; правление сообщит, когда она решена.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 lang-ro>Despre cooperativă</h2>
+    <h2 lang-ru>О кооперативе</h2>
+    <dl class="facts">
+      <dt lang-ro>Denumire</dt><dt lang-ru>Название</dt><dd>Cooperativa de Construcție a Garajelor „NR. 18”</dd>
+      <dt>IDNO</dt><dd>1010600015220</dd>
+      <dt lang-ro>Adresa juridică</dt><dt lang-ru>Юридический адрес</dt><dd>str. Mircești 8/1, sec. Rîșcani, mun. Chișinău, MD-2049</dd>
+      <dt lang-ro>Statut</dt><dt lang-ru>Статус</dt><dd lang-ro>activă</dd><dd lang-ru>действующий</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2 lang-ro>Datele dumneavoastră sunt protejate</h2>
+    <h2 lang-ru>Ваши данные защищены</h2>
+    <p lang-ro>Numărul de telefon îl primim doar de la Telegram, cu acordul dumneavoastră, și îl folosim exclusiv pentru a vă identifica în registrul cooperativei. Nu îl arătăm altor membri și nu îl transmitem nimănui. Fiecare acțiune a conducerii în sistem este înregistrată într-un jurnal.</p>
+    <p lang-ru>Номер телефона мы получаем только от Telegram, с вашего согласия, и используем исключительно для идентификации в реестре кооператива. Мы не показываем его другим членам и никому не передаём. Каждое действие правления в системе записывается в журнал.</p>
+  </section>
+
+  <footer>
+    <span lang-ro>Întrebări? Scrieți în bot, la „📝 Sesizare”, sau adresați-vă conducerii CCG 18.</span>
+    <span lang-ru>Вопросы? Напишите в боте, раздел «📝 Обращение», или обратитесь к правлению ГСК 18.</span>
+    <br><a href="/panou">Panoul conducerii</a> · <a href="https://github.com/negrueu/ccg18">Cod sursă deschis</a>
+  </footer>
+</div>
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search).get('lang');
+    var nav = (navigator.language || '').toLowerCase();
+    var ru = q ? q === 'ru' : nav.indexOf('ru') === 0;
+    if (ru) { document.body.classList.add('ru'); document.documentElement.lang = 'ru';
+      document.getElementById('l-ru').classList.add('on'); document.getElementById('l-ro').classList.remove('on'); }
+  })();
+</script>
+</body>
+</html>
