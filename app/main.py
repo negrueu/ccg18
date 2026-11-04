@@ -108,7 +108,7 @@ def create_app(settings=None, conn=None) -> FastAPI:
                 size = MAX_BODY + 1
             if size > MAX_BODY or (size == 0 and "chunked" in request.headers.get("transfer-encoding", "")):
                 return HTMLResponse("Prea mare", 413)
-            if request.url.path.startswith("/cont/") and request.url.path != "/cont/tg":
+            if request.url.path.startswith("/cont/") and request.url.path not in ("/cont/tg",) and not request.url.path.startswith("/cont/oidc/"):
                 from itsdangerous import BadSignature, URLSafeTimedSerializer
                 try:
                     URLSafeTimedSerializer(settings.secret_key, salt="member").loads(

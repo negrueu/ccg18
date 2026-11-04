@@ -2,13 +2,22 @@
 {% block title %}Intrare{% endblock %}
 {% block body %}
 <h1>Intrare în contul de membru</h1>
-{% if err == 'unlinked' %}<div class="msg warn">Contul dumneavoastră Telegram nu e încă legat de lista membrilor. Deschideți <a href="https://t.me/{{ bot_username }}?start=site">botul CCG 18</a>, apăsați Start și „📱 Trimite numărul meu”, apoi reveniți aici.</div>{% endif %}
-{% if err == 'invalid' %}<div class="msg warn">Verificarea Telegram a eșuat sau a expirat. Încercați din nou.</div>{% endif %}
+{% set msgs = {
+  'unlinked': 'Contul dumneavoastră Telegram nu e încă legat de lista membrilor. Deschideți botul CCG 18, apăsați Start și „📱 Trimite numărul meu”, apoi reveniți aici.',
+  'invalid': 'Verificarea Telegram a eșuat sau a expirat. Încercați din nou.',
+  'nophone': 'Pentru a vă găsi în lista membrilor, permiteți la intrare accesul la numărul de telefon.',
+  'notfound': 'Numărul dumneavoastră de telefon nu se află în lista membrilor CCG 18. Dacă sunteți membru, contactați conducerea.',
+  'relink': 'Numărul e legat de alt cont Telegram. Din motive de siguranță, conducerea trebuie să confirme schimbarea; cererea a fost trimisă.'} %}
+{% if err in msgs %}<div class="msg warn">{{ msgs[err] }}</div>{% endif %}
 <div class="card">
-  <p><b>Cu Telegram</b> - apăsați butonul albastru și confirmați în aplicația Telegram.</p>
+  <p><b>Cu Telegram</b> - apăsați butonul, confirmați în Telegram și permiteți accesul la numărul de telefon. Așa vă găsim în lista membrilor.</p>
+  {% if oidc %}
+  <a class="btn" href="/cont/oidc/start" style="font-size:22px">✈️ Intră cu Telegram</a>
+  {% else %}
   <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="{{ bot_username }}"
           data-size="large" data-radius="12" data-auth-url="{{ auth_url }}" data-request-access="write"></script>
-  <p class="muted" style="margin-top:14px">Prima dată vă identificați o singură dată în <a href="https://t.me/{{ bot_username }}?start=site">bot</a>, cu numărul de telefon. După aceea intrați aici cu un click.</p>
+  <p class="muted" style="margin-top:14px">Prima dată vă identificați o singură dată în <a href="https://t.me/{{ bot_username }}?start=site">bot</a>, cu numărul de telefon.</p>
+  {% endif %}
 </div>
 <div class="card">
   <p><b>Cu email</b> - în curând: veți primi un link de acces pe adresa legată de contul de membru.</p>

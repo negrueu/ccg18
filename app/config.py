@@ -33,6 +33,8 @@ class Settings:
     pay_iban: str = ""
     pay_fiscal: str = ""
     pay_bank: str = ""
+    tg_client_id: str = ""
+    tg_client_secret: str = ""
 
 
 def load() -> Settings:
@@ -51,4 +53,6 @@ def load() -> Settings:
         pay_iban=e.get("PAY_IBAN", ""),
         pay_fiscal=e.get("PAY_FISCAL", ""),
         pay_bank=e.get("PAY_BANK", ""),
+        tg_client_id=e.get("TG_CLIENT_ID", ""),
+        tg_client_secret=e.get("TG_CLIENT_SECRET", ""),
     )

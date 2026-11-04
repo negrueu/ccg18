@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
-from . import audit, dues, members, notices, reports, votes
+from . import audit, auth, dues, members, notices, reports, tg_oidc, votes
 from .web import templates
 
 router = APIRouter(prefix="/cont")
@@ -81,7 +81,79 @@ def page(request, name, m, **kw):
 def login_page(request: Request, err: str = ""):
     return templates.TemplateResponse(request, "cont_intrare.html", {
         "bot_username": st(request).bot_username or "ccg18bot", "err": err,
+        "oidc": bool(st(request).settings.tg_client_id and st(request).settings.tg_client_secret),
         "auth_url": st(request).settings.base_url + "/cont/tg"})
+
+
+FLOW_COOKIE = "ccg18_oidc"
+
+
+def _flow_signer(request):
+    return URLSafeTimedSerializer(st(request).settings.secret_key, salt="oidc-flow")
+
+
+@router.get("/oidc/start")
+def oidc_start(request: Request):
+    s = st(request).settings
+    if not (s.tg_client_id and s.tg_client_secret):
+        return RedirectResponse("/cont/intrare", 303)
+    flow = tg_oidc.new_flow()
+    resp = RedirectResponse(tg_oidc.auth_redirect(s.tg_client_id, s.base_url + "/cont/oidc/callback", flow), 303)
+    resp.set_cookie(FLOW_COOKIE, _flow_signer(request).dumps(flow), max_age=600, httponly=True,
+                    secure=s.base_url.startswith("https://"), samesite="lax", path="/cont/oidc")
+    return resp
+
+
+def _login_response(request, m):
+    secure = st(request).settings.base_url.startswith("https://")
+    resp = RedirectResponse("/cont", 303)
+    resp.set_cookie(COOKIE, signer(request).dumps(m["id"]), max_age=SESSION_AGE, httponly=True,
+                    secure=secure, samesite="lax")
+    resp.delete_cookie(FLOW_COOKIE, path="/cont/oidc")
+    return resp
+
+
+def login_from_claims(conn, claims):
+    """Membrul din claims OIDC: după contul Telegram deja legat, altfel după telefonul VERIFICAT de Telegram.
+    Returnează (member|None, motiv)."""
+    tg_id = tg_oidc.telegram_id(claims)
+    m = members.by_telegram(conn, tg_id) if tg_id else None
+    if m:
+        return m, "ok"
+    phone = claims.get("phone_number")
+    if not phone or claims.get("phone_number_verified") is False:
+        return None, "nophone"
+    m = members.find_by_phone(conn, str(phone))
+    if not m:
+        return None, "notfound"
+    if m["telegram_id"] and m["telegram_id"] != tg_id:
+        auth.kv_put_pending(conn, m["id"], tg_id)
+        conn.execute("insert into audit(actor_id, action, detail) values(null, 'relegare_blocata', ?)",
+                     (f"membru #{m['id']}: cont Telegram nou {tg_id} (site)",))
+        return None, "relink"
+    members.link_telegram(conn, m["id"], tg_id)
+    return members.get(conn, m["id"]), "ok"
+
+
+@router.get("/oidc/callback")
+async def oidc_callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    s = st(request).settings
+    try:
+        flow = _flow_signer(request).loads(request.cookies.get(FLOW_COOKIE, ""), max_age=600)
+    except BadSignature:
+        return RedirectResponse("/cont/intrare?err=invalid", 303)
+    if error or not code or not hmac.compare_digest(state, flow["state"]):
+        return RedirectResponse("/cont/intrare?err=invalid", 303)
+    try:
+        id_token = await tg_oidc.exchange_code(s.tg_client_id, s.tg_client_secret, code,
+                                               s.base_url + "/cont/oidc/callback", flow["verifier"])
+        claims = tg_oidc.verify_id_token(id_token, s.tg_client_id, flow["nonce"])
+    except Exception:
+        return RedirectResponse("/cont/intrare?err=invalid", 303)
+    m, why = login_from_claims(st(request).conn, claims)
+    if not m:
+        return RedirectResponse(f"/cont/intrare?err={why}", 303)
+    return _login_response(request, m)
 
 
 @router.get("/tg")
