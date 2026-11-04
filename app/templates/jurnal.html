@@ -11,6 +11,17 @@
   <p class="muted">Niciun grup legat. Creați un grup în Telegram, adăugați <b>@ccg18bot</b> și faceți-l administrator (cu dreptul „Invite users”). Botul creează automat linkul cu verificare și vi-l trimite.</p>
   {% endif %}
 </div>
+{% if pending %}
+<div class="card">
+  <b>⚠️ Schimbări de cont Telegram în așteptare</b>
+  <p class="muted">Numărul acestor membri a fost folosit de pe alt cont Telegram (telefon nou, SIM duplicat sau număr realocat). Aprobați doar după ce ați vorbit cu omul.</p>
+  {% for p in pending %}
+  <form method="post" action="/membri/{{ p.id }}/relegare" class="actions"><input type="hidden" name="csrf" value="{{ csrf }}">
+    <span>{{ p.name }}</span><button class="small">Aprobă contul nou</button>
+  </form>
+  {% endfor %}
+</div>
+{% endif %}
 <h2>Jurnal de audit</h2>
 <p class="muted">Fiecare acțiune a conducerii, cu autor și oră (UTC). Jurnalul nu poate fi modificat din panou.</p>
 <div class="scroll"><table>

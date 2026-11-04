@@ -201,8 +201,20 @@ def membri_confirma(mid: int, request: Request, nume: str = Form(...), garaje: s
 @router.get("/jurnal", response_class=HTMLResponse)
 def jurnal(request: Request, admin=Depends(current_admin)):
     c = ctx(request).conn
-    return render(request, "jurnal.html", admin, items=audit.recent(c),
+    pending = c.execute("select m.id, m.name from kv join members m on kv.key = 'relink:' || m.id "
+                        "where kv.value is not null").fetchall() if c.execute(
+        "select 1 from sqlite_master where name='kv'").fetchone() else []
+    return render(request, "jurnal.html", admin, items=audit.recent(c), pending=pending,
                   group={"title": kv.get(c, "group_title"), "invite": kv.get(c, "group_invite")})
+
+
+@router.post("/membri/{mid}/relegare")
+def membri_relegare(mid: int, request: Request, admin=Depends(admin_post)):
+    st = ctx(request)
+    new_tg = auth.approve_relink(st.conn, mid)
+    if new_tg:
+        audit.log(st.conn, admin["id"], "relegare_aprobata", f"membru #{mid} -> cont Telegram {new_tg}")
+    return RedirectResponse("/jurnal", 303)
 
 
 # ---------- voturi ----------

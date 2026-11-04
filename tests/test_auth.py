@@ -27,6 +27,21 @@ def test_unknown_and_known(conn):
     assert members.by_telegram(conn, 100)["id"] == m["id"]
 
 
+def test_relink_to_other_account_blocked_until_approved(conn):
+    _setup(conn)
+    m = auth.login_contact(conn, 100, 100, "37300111222")
+    assert m["telegram_id"] == 100
+    # același număr, alt cont Telegram (SIM duplicat / număr realocat)
+    with pytest.raises(auth.RelinkBlocked):
+        auth.login_contact(conn, 200, 200, "37300111222")
+    assert members.find_by_phone(conn, "000111222")["telegram_id"] == 100
+    assert conn.execute("select count(*) from audit where action='relegare_blocata'").fetchone()[0] == 1
+    assert auth.approve_relink(conn, m["id"]) == 200
+    assert members.find_by_phone(conn, "000111222")["telegram_id"] == 200
+    # același cont care revine: fără blocaj
+    assert auth.login_contact(conn, 200, 200, "37300111222")["id"] == m["id"]
+
+
 def test_admin_token_single_use_and_expiry(conn):
     _setup(conn)
     adm = members.find_by_phone(conn, "000000999")

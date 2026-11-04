@@ -249,7 +249,14 @@ def build(conn, settings):
     async def got_contact(msg: Message, state: FSMContext):
         lang = (await state.get_data()).get("lang", "ro")
         c = msg.contact
-        m = auth.login_contact(conn, msg.from_user.id, c.user_id, c.phone_number)
+        try:
+            m = auth.login_contact(conn, msg.from_user.id, c.user_id, c.phone_number)
+        except auth.RelinkBlocked as e:
+            await msg.answer(t(lang, "relink_blocked"), reply_markup=ReplyKeyboardRemove())
+            for a in conn.execute("select * from members where is_admin=1 and telegram_id is not null"):
+                tid = a["telegram_id"]
+                await safe_send(lambda: bot.send_message(tid, t(a["lang"], "relink_admin", name=esc(e.member["name"]))))
+            return
         if not m:
             log.info("contact respins: user=%s contact_user=%s phone=%s", msg.from_user.id, c.user_id,
                      c.phone_number)
