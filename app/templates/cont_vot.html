@@ -1,0 +1,23 @@
+{% extends "cont_base.html" %}
+{% block title %}Vot{% endblock %}
+{% block body %}
+<h1>{{ v.title }}</h1>
+{% if v.description %}<p>{{ v.description }}</p>{% endif %}
+<p class="muted">Termen: {{ v.deadline|dt }} · {{ 'un vot pe garaj (votul dvs. contează x' ~ weight ~ ')' if v.weight_mode == 'garage' else 'un vot pe membru' }}{{ ' · vot secret' if v.secret }}</p>
+{% if err %}<div class="msg warn">{{ {'already':'Ați votat deja.','closed':'Votul este închis.','expired':'Termenul a expirat.','not_confirmed':'Votul se activează după confirmarea datelor de către conducere.','confirm':'Bifați confirmarea înainte de a trimite.','bad_option':'Variantă invalidă.'}.get(err, 'Eroare.') }}</div>{% endif %}
+{% if voted %}
+<div class="msg">✅ Votul dumneavoastră a fost înregistrat.</div>
+<a class="btn ghost" href="/cont">Înapoi</a>
+{% elif is_open %}
+<form method="post" action="/cont/vot/{{ v.id }}" class="card"><input type="hidden" name="csrf" value="{{ csrf }}">
+  {% for o in opts %}
+  <label class="big"><input type="radio" name="option_idx" value="{{ loop.index0 }}" required> {{ o }}</label>
+  {% endfor %}
+  <br>
+  <label class="big"><input type="checkbox" name="confirm" value="da" required> Confirm alegerea. Știu că votul nu mai poate fi schimbat.</label>
+  <br><button class="btn">Trimite votul</button>
+</form>
+{% else %}
+<div class="msg warn">Votul este închis.</div>
+{% endif %}
+{% endblock %}

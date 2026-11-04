@@ -12,6 +12,7 @@ import pathlib
 from . import config, db, seed
 from . import bot as botmod
 from .web import router
+from .member_web import router as member_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("ccg18")
@@ -65,6 +66,7 @@ def create_app(settings=None, conn=None) -> FastAPI:
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.mount("/static", StaticFiles(directory=str(pathlib.Path(__file__).parent / "static")), name="static")
     app.include_router(router)
+    app.include_router(member_router)
 
     @app.post("/tg/webhook")
     async def webhook(request: Request):
@@ -106,6 +108,13 @@ def create_app(settings=None, conn=None) -> FastAPI:
                 size = MAX_BODY + 1
             if size > MAX_BODY or (size == 0 and "chunked" in request.headers.get("transfer-encoding", "")):
                 return HTMLResponse("Prea mare", 413)
+            if request.url.path.startswith("/cont/") and request.url.path != "/cont/tg":
+                from itsdangerous import BadSignature, URLSafeTimedSerializer
+                try:
+                    URLSafeTimedSerializer(settings.secret_key, salt="member").loads(
+                        request.cookies.get("ccg18_member", ""), max_age=30 * 24 * 3600)
+                except BadSignature:
+                    return HTMLResponse("Neautorizat", 401)
             if request.url.path.startswith(PROTECTED):
                 from itsdangerous import BadSignature, URLSafeTimedSerializer
                 try:
@@ -122,7 +131,8 @@ def create_app(settings=None, conn=None) -> FastAPI:
         # Mini App-ul rulează și în iframe pe web.telegram.org: doar acolo e permisă încadrarea.
         h["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; "
-            "style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; img-src 'self' data: https://t.me https://*.telegram.org; media-src 'self'; "
+            "connect-src 'self'; frame-src https://oauth.telegram.org; "
             "form-action 'self'; base-uri 'none'; object-src 'none'; "
             "frame-ancestors 'self' https://web.telegram.org")
         h["X-Content-Type-Options"] = "nosniff"
@@ -140,6 +150,9 @@ def create_app(settings=None, conn=None) -> FastAPI:
 
     @app.exception_handler(HTTPException)
     async def http_exc(request: Request, exc: HTTPException):
+        if exc.status_code == 401 and request.url.path.startswith("/cont"):
+            from fastapi.responses import RedirectResponse as _R
+            return _R("/cont/intrare", 303)
         if exc.status_code == 401:
             return HTMLResponse(
                 "<meta name=viewport content='width=device-width'><p style='font-family:sans-serif;padding:2rem'>"

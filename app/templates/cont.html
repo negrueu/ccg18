@@ -1,0 +1,33 @@
+{% extends "cont_base.html" %}
+{% block body %}
+<h1>Bună ziua, {{ m.name }}</h1>
+{% set q = request.query_params.get('msg', '') %}
+{% if q.startswith('sesizare') %}<div class="msg">Sesizarea #{{ q[8:] }} a fost trimisă conducerii.</div>{% endif %}
+{% if q == 'limita' %}<div class="msg warn">Ați trimis deja 5 sesizări azi.</div>{% endif %}
+{% if not confirmed %}<div class="msg warn">Datele dumneavoastră așteaptă confirmarea conducerii. Până atunci vedeți anunțurile; votul se activează după confirmare.</div>{% endif %}
+
+<h2>🗳 Voturi deschise</h2>
+{% for v in open_votes %}
+<div class="card"><b>{{ v.title }}</b><br><span class="muted">termen {{ v.deadline|dt }}</span><br><br>
+  <a class="btn" href="/cont/vot/{{ v.id }}">Votează</a></div>
+{% else %}<p class="muted">Nu aveți voturi deschise.</p>{% endfor %}
+
+<h2>💰 Cotizații</h2>
+<div class="card">
+  <p class="muted">Garaje: {% for g in garages %}{{ g.number }}{{ ', ' if not loop.last }}{% else %}-{% endfor %}</p>
+  {% if dues %}<table>
+    {% for d in dues %}<tr><td>Garaj {{ d.garage }}, {{ d.period }}</td><td>{{ "%.0f"|format(d.amount) }} lei</td>
+      <td>{{ 'achitat ✅' if d.paid else 'de achitat' }}</td></tr>{% endfor %}
+  </table>{% else %}<p>Nu aveți cotizații înregistrate.</p>{% endif %}
+</div>
+
+<h2>📢 Anunțuri</h2>
+{% for n in news %}<div class="card"><b>{{ 'CONVOCARE: ' if n.kind == 'convocare' }}{{ n.title }}</b><p>{{ n.body }}</p><span class="muted">{{ n.created_at }}</span></div>
+{% else %}<p class="muted">Nu există anunțuri încă.</p>{% endfor %}
+
+<h2>📝 Sesizare</h2>
+<form class="card" method="post" action="/cont/sesizare"><input type="hidden" name="csrf" value="{{ csrf }}">
+  <textarea name="text" rows="4" required placeholder="Descrieți problema"></textarea><br><br>
+  <button class="btn">Trimite sesizarea</button>
+</form>
+{% endblock %}

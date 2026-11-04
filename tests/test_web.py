@@ -142,3 +142,42 @@ def test_landing_public_and_qr():
         assert r.status_code == 200 and "1010600015220" in r.text and "t.me/ccg18bot" in r.text
         assert client.get("/qr-bot.png").content.startswith(bytes([0x89]) + b"PNG")
         assert client.get("/panou", follow_redirects=False).status_code == 401
+
+
+def _tg_login_params(token, tg_id, auth_date=None):
+    import hashlib, hmac, time
+    d = {"id": str(tg_id), "first_name": "Ion", "auth_date": str(auth_date or int(time.time()))}
+    check = chr(10).join(f"{k}={d[k]}" for k in sorted(d))
+    d["hash"] = hmac.new(hashlib.sha256(token.encode()).digest(), check.encode(), hashlib.sha256).hexdigest()
+    return d
+
+
+def test_member_site_telegram_login_and_vote():
+    from app import member_web
+    tok = "123:SECRET"
+    assert member_web.verify_telegram_login(_tg_login_params(tok, 7), tok) == 7
+    assert member_web.verify_telegram_login(_tg_login_params(tok, 7), "123:OTHER") is None
+    assert member_web.verify_telegram_login(_tg_login_params(tok, 7, auth_date=1), tok) is None
+    s = config.Settings(bot_token=tok, secret_key="k" * 40, base_url="http://test", db_path=":memory:",
+                        seed_demo=True, admin_phones=[], run_bot=False, upload_dir="data/test-uploads")
+    conn = db.connect(":memory:")
+    client = TestClient(create_app(s, conn), headers={"Origin": "http://test"})
+    with client:
+        assert client.get("/cont", follow_redirects=False).headers["location"] == "/cont/intrare"
+        # cont Telegram nelegat -> trimis în bot
+        assert "unlinked" in client.get("/cont/tg", params=_tg_login_params(tok, 999), follow_redirects=False).headers["location"]
+        m = members.find_by_phone(conn, "000000000")
+        members.link_telegram(conn, m["id"], 77)
+        r = client.get("/cont/tg", params=_tg_login_params(tok, 77), follow_redirects=False)
+        assert r.headers["location"] == "/cont"
+        v = votes.create(conn, "Buget", "", ["Pentru", "Contra"], "member", False,
+                         datetime.now(timezone.utc) + timedelta(days=1))
+        page = client.get(f"/cont/vot/{v}").text
+        import re
+        csrf = re.search(r'name="csrf" value="([0-9a-f]+)"', page).group(1)
+        assert "err=confirm" in client.post(f"/cont/vot/{v}", data={"csrf": csrf, "option_idx": 0},
+                                            follow_redirects=False).headers["location"]
+        client.post(f"/cont/vot/{v}", data={"csrf": csrf, "option_idx": 0, "confirm": "da"})
+        assert votes.has_voted(conn, v, m["id"])
+        assert client.post(f"/cont/vot/{v}", data={"option_idx": 1, "confirm": "da"},
+                           follow_redirects=False).status_code == 403

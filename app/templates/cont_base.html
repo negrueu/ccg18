@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Contul meu{% endblock %} - CCG 18</title>
+<style>
+  :root { --bg:#f6f4ee; --ink:#1b1c19; --muted:#5d5c55; --accent:#1f5f4a; --accent-2:#e3efe9; --card:#fff; --line:#e2dfd6; --warn:#a24a12; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141513; --ink:#efeee9; --muted:#a9a79f; --accent:#5fb393; --accent-2:#1f2b26; --card:#1d1e1b; --line:#2e2f2b; --warn:#e58a4f; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font: 20px/1.55 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 18px 60px; }
+  header { display:flex; justify-content:space-between; align-items:center; padding: 18px 0; gap: 12px; }
+  .logo { font-weight:800; font-size:22px; text-decoration:none; color:var(--ink); }
+  .logo b { background:var(--accent); color:#fff; border-radius:10px; padding:4px 9px; margin-right:6px; }
+  h1 { font-size: 30px; margin: 10px 0 18px; }
+  h2 { font-size: 24px; margin: 30px 0 12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; margin-bottom:14px; }
+  .btn { display:inline-block; background:var(--accent); color:#fff; border:0; border-radius:12px; font: inherit; font-weight:700;
+         padding: 14px 22px; min-height: 56px; text-decoration:none; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--accent); border:2px solid var(--accent); }
+  .btn:focus-visible, button:focus-visible, a:focus-visible { outline: 4px solid var(--ink); outline-offset: 2px; }
+  .opt { display:block; width:100%; text-align:left; margin: 10px 0; }
+  .muted { color: var(--muted); }
+  .msg { border-left: 5px solid var(--accent); background: var(--accent-2); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
+  .warn { border-left-color: var(--warn); }
+  table { width:100%; border-collapse: collapse; }
+  td, th { padding: 10px 6px; border-bottom: 1px solid var(--line); text-align:left; }
+  textarea { width:100%; font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  label.big { display:flex; gap: 12px; align-items:center; font-size: 20px; }
+  label.big input { width: 28px; height: 28px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="logo" href="/cont"><b>18</b>CCG 18</a>
+  {% if m %}<form method="post" action="/cont/iesire"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost">Ieșire</button></form>{% endif %}
+</header>
+{% block body %}{% endblock %}
+</div>
+</body>
+</html>
