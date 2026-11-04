@@ -413,7 +413,8 @@ def build(conn, settings):
             rows = dues.for_member(conn, m["id"])
             unpaid = [d for d in rows if not d["paid"]]
             lines = [t(lang, "dues_head")] + [
-                t(lang, "dues_line", garage=d["garage"], period=d["period"], amount=d["amount"],
+                t(lang, "dues_line_member" if d["garage"] is None else "dues_line", garage=d["garage"],
+                  period=d["period"], amount=d["amount"],
                   status=t(lang, "paid") if d["paid"] else t(lang, "unpaid")) for d in rows]
             if not unpaid:
                 lines.append(t(lang, "dues_none"))
@@ -422,8 +423,12 @@ def build(conn, settings):
             total = sum(d["amount"] for d in unpaid)
             lines.append(t(lang, "dues_total", total=total))
             await msg.answer("\n".join(lines))
-            png = dues.qr_png(garages_str(conn, m["id"]), total)
-            await msg.answer_photo(BufferedInputFile(png, "qr-demo.png"), caption=t(lang, "qr_caption"))
+            if settings.pay_iban:
+                period = max(d["period"] for d in unpaid)
+                purpose = dues.payment_purpose(period, m["name"], garages_str(conn, m["id"]))
+                await msg.answer(t(lang, "pay_details", beneficiary=esc(settings.pay_beneficiary),
+                                   fiscal=esc(settings.pay_fiscal), iban=esc(settings.pay_iban),
+                                   bank=esc(settings.pay_bank), amount=total, purpose=esc(purpose)))
         elif key == "m_report":
             await state.set_state(ReportFlow.waiting)
             await msg.answer(t(lang, "report_ask"), reply_markup=ReplyKeyboardRemove())

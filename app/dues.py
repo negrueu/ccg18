@@ -1,4 +1,5 @@
 import io
+
 import qrcode
 
 
@@ -6,18 +7,35 @@ def add(conn, garage_id, period, amount):
     conn.execute("insert or ignore into dues(garage_id, period, amount) values(?,?,?)", (garage_id, period, amount))
 
 
+def add_member(conn, member_id, period, amount):
+    conn.execute("insert or ignore into dues(member_id, period, amount) values(?,?,?)", (member_id, period, amount))
+
+
+def generate_member_dues(conn, period, amount) -> int:
+    """Cotizație pe membru (ex. CCG 18: 1.200 lei/an) pentru toți membrii confirmați. Idempotent."""
+    before = conn.execute("select count(*) from dues where member_id is not null and period=?", (period,)).fetchone()[0]
+    for m in conn.execute("select id from members where status='confirmat'").fetchall():
+        add_member(conn, m["id"], period, amount)
+    after = conn.execute("select count(*) from dues where member_id is not null and period=?", (period,)).fetchone()[0]
+    return after - before
+
+
 def for_member(conn, member_id):
-    return [dict(r) for r in conn.execute(
-        "select d.id, g.number as garage, d.period, d.amount, d.paid_at is not null as paid "
+    rows = conn.execute(
+        "select d.id, g.number as garage, d.period, d.amount, d.paid_at is not null as paid, d.paid_at "
         "from dues d join garages g on g.id=d.garage_id where g.member_id=? "
-        "order by cast(g.number as integer), d.period", (member_id,))]
+        "union all "
+        "select d.id, null as garage, d.period, d.amount, d.paid_at is not null as paid, d.paid_at "
+        "from dues d where d.member_id=? order by period, garage", (member_id, member_id)).fetchall()
+    return [dict(r) for r in rows]
 
 
 def list_all(conn):
     return conn.execute(
-        "select d.*, g.number as garage, m.name from dues d join garages g on g.id=d.garage_id "
-        "left join members m on m.id=g.member_id order by d.paid_at is not null, cast(g.number as integer), d.period"
-    ).fetchall()
+        "select d.*, g.number as garage, coalesce(m1.name, m2.name) as name from dues d "
+        "left join garages g on g.id=d.garage_id left join members m1 on m1.id=g.member_id "
+        "left join members m2 on m2.id=d.member_id "
+        "order by d.paid_at is not null, d.period desc, coalesce(m1.name, m2.name)").fetchall()
 
 
 def mark_paid(conn, due_id):
@@ -30,8 +48,12 @@ def summary(conn):
     return dict(r)
 
 
-def qr_png(garage_number, amount) -> bytes:
-    text = f"DEMO - fara plata reala. CCG 18, garaj {garage_number}, suma {amount:.2f} MDL"
+def payment_purpose(period, name, garages) -> str:
+    g = f", garaj {garages}" if garages and garages != "-" else ""
+    return f"Cotizatie {period} CCG-18, {name}{g}"
+
+
+def qr_png(text: str) -> bytes:
     img = qrcode.make(text)
     buf = io.BytesIO()
     img.save(buf, format="PNG")

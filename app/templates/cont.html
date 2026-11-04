@@ -1,33 +1,108 @@
 {% extends "cont_base.html" %}
 {% block body %}
+<style>
+  .tiles { display:grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; }
+  .tile b { display:block; font-size: 34px; line-height:1.1; font-variant-numeric: tabular-nums; }
+  .tile span { color: var(--muted); font-size: 17px; }
+  .tile.due b { color: var(--warn); }
+  .row { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
+  .row:last-child { border-bottom:0; }
+  .copy { font: inherit; font-size:16px; background:var(--accent-2); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 10px; cursor:pointer; white-space:nowrap; }
+  code { font-size: 18px; word-break: break-all; }
+  .pill { font-size: 16px; padding: 2px 10px; border-radius: 99px; border:1px solid var(--line); white-space:nowrap; }
+  .ok { color: var(--accent); border-color: var(--accent); }
+  .no { color: var(--warn); border-color: var(--warn); }
+  @media (max-width: 640px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
 <h1>Bună ziua, {{ m.name }}</h1>
 {% set q = request.query_params.get('msg', '') %}
 {% if q.startswith('sesizare') %}<div class="msg">Sesizarea #{{ q[8:] }} a fost trimisă conducerii.</div>{% endif %}
 {% if q == 'limita' %}<div class="msg warn">Ați trimis deja 5 sesizări azi.</div>{% endif %}
 {% if not confirmed %}<div class="msg warn">Datele dumneavoastră așteaptă confirmarea conducerii. Până atunci vedeți anunțurile; votul se activează după confirmare.</div>{% endif %}
 
+<div class="tiles">
+  <div class="tile"><b>{{ garages|length }}</b><span>{{ 'garaj' if garages|length == 1 else 'garaje' }}</span></div>
+  <div class="tile {{ 'due' if total_due }}"><b>{{ "%.0f"|format(total_due) }}</b><span>lei de achitat</span></div>
+  <div class="tile"><b>{{ open_votes|length }}</b><span>voturi vă așteaptă</span></div>
+  <div class="tile"><b>{{ open_reports }}</b><span>sesizări deschise</span></div>
+</div>
+
+{% if open_votes %}
 <h2>🗳 Voturi deschise</h2>
 {% for v in open_votes %}
 <div class="card"><b>{{ v.title }}</b><br><span class="muted">termen {{ v.deadline|dt }}</span><br><br>
   <a class="btn" href="/cont/vot/{{ v.id }}">Votează</a></div>
-{% else %}<p class="muted">Nu aveți voturi deschise.</p>{% endfor %}
+{% endfor %}
+{% endif %}
 
-<h2>💰 Cotizații</h2>
+<h2>🏠 Garajele mele</h2>
 <div class="card">
-  <p class="muted">Garaje: {% for g in garages %}{{ g.number }}{{ ', ' if not loop.last }}{% else %}-{% endfor %}</p>
-  {% if dues %}<table>
-    {% for d in dues %}<tr><td>Garaj {{ d.garage }}, {{ d.period }}</td><td>{{ "%.0f"|format(d.amount) }} lei</td>
-      <td>{{ 'achitat ✅' if d.paid else 'de achitat' }}</td></tr>{% endfor %}
-  </table>{% else %}<p>Nu aveți cotizații înregistrate.</p>{% endif %}
+  {% for g in garages %}
+  <div class="row"><span><b>Garaj {{ g.number }}</b>{% if g.row_label %} <span class="muted">· rândul {{ g.row_label }}</span>{% endif %}</span></div>
+  {% else %}
+  <p class="muted">{% if m.self_garages %}Ați declarat: {{ m.self_garages }} - în curs de confirmare de către conducere.{% else %}Nu aveți garaje înregistrate încă.{% endif %}</p>
+  {% endfor %}
+</div>
+
+<h2>💰 Cotizații și datorii</h2>
+<div class="card">
+  {% for d in dues %}
+  <div class="row"><span>{% if d.garage %}Garaj {{ d.garage }}, {{ d.period }}{% else %}Cotizație de membru {{ d.period }}{% endif %}</span>
+    <span><b>{{ "%.0f"|format(d.amount) }} lei</b> <span class="pill {{ 'ok' if d.paid else 'no' }}">{{ 'achitat' if d.paid else 'de achitat' }}</span></span></div>
+  {% else %}<p>Nu aveți cotizații înregistrate.</p>{% endfor %}
+</div>
+
+{% if pay %}
+<h2>🏦 Cum plătiți</h2>
+<div class="card">
+  <p class="muted">Transfer din aplicația băncii dumneavoastră. Copiați fiecare rând cu butonul de lângă el.</p>
+  {% for label, val in [('Beneficiar', pay.beneficiary), ('Cod fiscal', pay.fiscal), ('IBAN', pay.iban), ('Suma', ("%.0f"|format(pay.amount)) ~ ' lei'), ('Destinația plății', pay.purpose)] %}
+  <div class="row"><span><span class="muted">{{ label }}</span><br><code>{{ val }}</code></span>
+    <button class="copy" type="button" data-copy="{{ val }}">Copiază</button></div>
+  {% endfor %}
+  <p class="muted">Banca: {{ pay.bank }}. După ce banii ajung în contul cooperativei, conducerea marchează plata și o vedeți aici ca „achitat”.</p>
+</div>
+{% endif %}
+
+<h2>🗳 Voturile mele</h2>
+<div class="card">
+  {% for v in votes_hist %}
+  <div class="row"><span><b>{{ v.title }}</b><br><span class="muted">{{ v.when }}{{ ' · pe hârtie' if v.paper }}</span></span>
+    <span>{% if v.secret %}<span class="pill">vot secret ✓</span>{% else %}<span class="pill ok">{{ v.choice }}</span>{% endif %}</span></div>
+  {% else %}<p class="muted">Nu ați participat încă la niciun vot.</p>{% endfor %}
+</div>
+
+<h2>📝 Sesizările mele</h2>
+<div class="card">
+  {% for r in my_reports %}
+  <div class="row"><span>#{{ r.id }} {{ r.text[:80] }}<br><span class="muted">{{ r.created_at }}</span></span>
+    <span class="pill {{ 'ok' if r.status == 'rezolvat' else 'no' }}">{{ r.status }}</span></div>
+  {% else %}<p class="muted">Nu ați trimis sesizări.</p>{% endfor %}
+  <form method="post" action="/cont/sesizare" style="margin-top:14px"><input type="hidden" name="csrf" value="{{ csrf }}">
+    <textarea name="text" rows="3" required placeholder="Descrieți o problemă nouă"></textarea><br><br>
+    <button class="btn">Trimite sesizarea</button>
+  </form>
 </div>
 
 <h2>📢 Anunțuri</h2>
 {% for n in news %}<div class="card"><b>{{ 'CONVOCARE: ' if n.kind == 'convocare' }}{{ n.title }}</b><p>{{ n.body }}</p><span class="muted">{{ n.created_at }}</span></div>
 {% else %}<p class="muted">Nu există anunțuri încă.</p>{% endfor %}
 
-<h2>📝 Sesizare</h2>
-<form class="card" method="post" action="/cont/sesizare"><input type="hidden" name="csrf" value="{{ csrf }}">
-  <textarea name="text" rows="4" required placeholder="Descrieți problema"></textarea><br><br>
-  <button class="btn">Trimite sesizarea</button>
-</form>
+<h2>👤 Datele mele</h2>
+<div class="card">
+  <div class="row"><span class="muted">Nume</span><b>{{ m.name }}</b></div>
+  <div class="row"><span class="muted">Telefon</span><b>+{{ m.phone }}</b></div>
+  <div class="row"><span class="muted">Stare</span><b>{{ 'confirmat de conducere ✅' if confirmed else 'în așteptarea confirmării' }}</b></div>
+  <p class="muted" style="margin-top:12px">Ceva greșit? Trimiteți o sesizare sau scrieți în bot la „👤 Datele mele”.</p>
+</div>
+
+<script>
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function () { b.textContent = 'Copiat ✓'; });
+    });
+  });
+</script>
 {% endblock %}

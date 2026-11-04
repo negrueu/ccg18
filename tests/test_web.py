@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
-from app import auth, config, db, members, seed, votes
+from app import auth, config, db, dues, members, seed, votes
 from app.main import create_app
 
 
@@ -181,3 +181,25 @@ def test_member_site_telegram_login_and_vote():
         assert votes.has_voted(conn, v, m["id"])
         assert client.post(f"/cont/vot/{v}", data={"option_idx": 1, "confirm": "da"},
                            follow_redirects=False).status_code == 403
+
+
+def test_generate_member_dues_and_member_dashboard():
+    import re
+    tok = "123:SECRET"
+    s = config.Settings(bot_token=tok, secret_key="k" * 40, base_url="http://test", db_path=":memory:",
+                        seed_demo=True, admin_phones=["000999888"], run_bot=False, upload_dir="data/test-uploads",
+                        pay_beneficiary="CCG TEST", pay_iban="XX00TEST", pay_fiscal="0", pay_bank="Banca Test")
+    conn = db.connect(":memory:")
+    client = TestClient(create_app(s, conn), headers={"Origin": "http://test"})
+    with client:
+        adm = members.find_by_phone(conn, "000999888")
+        client.get(f"/login/{auth.issue_admin_token(conn, adm['id'])}")
+        csrf = re.search(r'name="csrf" value="([0-9a-f]+)"', client.get("/cotizatii").text).group(1)
+        client.post("/cotizatii/genereaza", data={"csrf": csrf, "period": "2027", "amount": "1200"})
+        m = members.find_by_phone(conn, "000000000")
+        assert any(d["garage"] is None and d["period"] == "2027" for d in dues.for_member(conn, m["id"]))
+        members.link_telegram(conn, m["id"], 88)
+        client.get("/cont/tg", params=_tg_login_params(tok, 88))
+        page = client.get("/cont").text
+        assert "lei de achitat" in page and "XX00TEST" in page and "Cotizatie 2027 CCG-18" in page
+        assert "Garajele mele" in page and "Voturile mele" in page

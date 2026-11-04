@@ -29,6 +29,10 @@ class Settings:
     admin_phones: list
     run_bot: bool
     upload_dir: str
+    pay_beneficiary: str = ""
+    pay_iban: str = ""
+    pay_fiscal: str = ""
+    pay_bank: str = ""
 
 
 def load() -> Settings:
@@ -43,4 +47,8 @@ def load() -> Settings:
         admin_phones=[p for p in e.get("ADMIN_PHONES", "").split(",") if p.strip()],
         run_bot=e.get("RUN_BOT", "1") == "1",
         upload_dir=e.get("UPLOAD_DIR", "data/uploads"),
+        pay_beneficiary=e.get("PAY_BENEFICIARY", ""),
+        pay_iban=e.get("PAY_IBAN", ""),
+        pay_fiscal=e.get("PAY_FISCAL", ""),
+        pay_bank=e.get("PAY_BANK", ""),
     )

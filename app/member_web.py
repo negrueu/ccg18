@@ -110,8 +110,33 @@ def logout(m=Depends(member_post)):
 @router.get("", response_class=HTMLResponse)
 def home(request: Request, m=Depends(current_member)):
     c = st(request).conn
-    return page(request, "cont.html", m, garages=members.garages(c, m["id"]), open_votes=votes.open_for(c, m["id"]),
-                dues=dues.for_member(c, m["id"]), news=notices.recent_for(c, m["id"], 10),
+    s = st(request).settings
+    my_dues = dues.for_member(c, m["id"])
+    unpaid = [d for d in my_dues if not d["paid"]]
+    garages = members.garages(c, m["id"])
+    gstr = ", ".join(g["number"] for g in garages) or "-"
+    my_votes = c.execute(
+        "select v.id, v.title, v.secret, v.status, vc.cast_at, vc.entered_by, "
+        "(select option_idx from vote_choice ch where ch.vote_id=v.id and ch.member_id=?) as opt, v.options_json "
+        "from vote_cast vc join votes v on v.id=vc.vote_id where vc.member_id=? order by v.id desc",
+        (m["id"], m["id"])).fetchall()
+    import json
+    votes_hist = [{"title": r["title"], "secret": r["secret"], "when": r["cast_at"],
+                   "paper": bool(r["entered_by"]),
+                   "choice": None if r["secret"] or r["opt"] is None else json.loads(r["options_json"])[r["opt"]]}
+                  for r in my_votes]
+    my_reports = c.execute("select id, text, status, created_at from reports where member_id=? order by id desc limit 20",
+                           (m["id"],)).fetchall()
+    pay = None
+    if s.pay_iban and unpaid:
+        period = max(d["period"] for d in unpaid)
+        pay = {"beneficiary": s.pay_beneficiary, "fiscal": s.pay_fiscal, "iban": s.pay_iban, "bank": s.pay_bank,
+               "amount": sum(d["amount"] for d in unpaid),
+               "purpose": dues.payment_purpose(period, m["name"], gstr)}
+    return page(request, "cont.html", m, garages=garages, open_votes=votes.open_for(c, m["id"]),
+                dues=my_dues, total_due=sum(d["amount"] for d in unpaid), pay=pay,
+                news=notices.recent_for(c, m["id"], 10), votes_hist=votes_hist, my_reports=my_reports,
+                open_reports=sum(1 for r in my_reports if r["status"] != "rezolvat"),
                 confirmed=members.is_confirmed(m))
 
 

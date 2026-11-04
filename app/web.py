@@ -340,6 +340,18 @@ def cotizatii(request: Request, admin=Depends(current_admin)):
     return render(request, "cotizatii.html", admin, items=dues.list_all(c), s=dues.summary(c))
 
 
+@router.post("/cotizatii/genereaza")
+def cotizatii_genereaza(request: Request, period: str = Form(...), amount: float = Form(...),
+                        admin=Depends(admin_post)):
+    c = ctx(request).conn
+    period = period.strip()[:20]
+    if not period or amount <= 0 or amount > 100000:
+        return RedirectResponse("/cotizatii", 303)
+    n = dues.generate_member_dues(c, period, amount)
+    audit.log(c, admin["id"], "cotizatii_generate", f"{n} membri x {amount:.0f} lei, perioada {period}")
+    return RedirectResponse("/cotizatii", 303)
+
+
 @router.post("/cotizatii/{due_id}/achitat")
 def cotizatii_paid(due_id: int, request: Request, admin=Depends(admin_post)):
     dues.mark_paid(ctx(request).conn, due_id)

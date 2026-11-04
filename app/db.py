@@ -89,6 +89,9 @@ def connect(path: str) -> LockedConnection:
                      ("created_at", "text")):
         if col not in cols:
             c.execute(f"alter table members add column {col} {ddl}")
+    if "member_id" not in {r[1] for r in c.execute("pragma table_info(dues)")}:
+        c.execute("alter table dues add column member_id integer references members(id)")
+        c.execute("create unique index if not exists dues_member_period on dues(member_id, period) where member_id is not null")
     if "voice_file_id" not in {r[1] for r in c.execute("pragma table_info(reports)")}:
         c.execute("alter table reports add column voice_file_id text")
     c.execute("""create table if not exists audit(

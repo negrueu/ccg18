@@ -42,7 +42,18 @@ def test_dues_and_qr(conn):
     assert sum(r["amount"] for r in rows if not r["paid"]) == 1300
     dues.mark_paid(conn, rows[0]["id"])
     assert sum(r["amount"] for r in dues.for_member(conn, a) if not r["paid"]) == 650
-    assert dues.qr_png("1", 650).startswith(b"\x89PNG")
+    assert dues.qr_png("x").startswith(bytes([0x89]) + b"PNG")
+
+
+def test_member_dues(conn):
+    a, b, c = _people(conn)
+    conn.execute("update members set status='neconfirmat' where id=?", (c,))
+    assert dues.generate_member_dues(conn, "2026", 1200) == 2
+    assert dues.generate_member_dues(conn, "2026", 1200) == 0
+    rows = dues.for_member(conn, a)
+    assert any(r["garage"] is None and r["amount"] == 1200 for r in rows)
+    assert dues.for_member(conn, c) == []
+    assert "garaj 1, 2" in dues.payment_purpose("2026", "A", "1, 2")
 
 
 def test_reports(conn):
